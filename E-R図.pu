@@ -1,0 +1,35 @@
+@startuml E-R図
+title IT単語帳
+
+entity "単語(ローカル)" as LocalWord {
+  * 単語ID : int <<PK>>
+  --
+  * 単語名 : String
+  * 意味 : text
+  * タグ : String
+  * カテゴリ : String
+  * 作成ユーザー名 : String
+}
+
+entity "ユーザー" as User {
+  * ユーザーID : int <<PK>>
+  --
+  * ユーザー名 : String
+  * パスワード : String
+}
+
+entity "単語(サーバー)" as ServerWord {
+    * 単語ID : int <<PK>>
+  --
+  * ユーザーID : int <<FK>>
+  * 単語名 : String
+  * 意味 : text
+  * タグ : String
+  * カテゴリ : String
+  * 同期(共有)確認 : boolean
+  * 最終編集日時 : datetime
+}
+
+User ||--o ServerWord : "1対多"
+
+@enduml
