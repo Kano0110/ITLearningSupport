@@ -25,8 +25,8 @@ def get_id_pass():
 
 # リセット動作
 def set_clear():
-    text_Name.set('')
-    text_Kai.set('')
+    entry_Name.delete("1.0", tkinter.END)
+    entry_Kai.delete("1.0", tkinter.END)
     cb_Category.set(" ")
     cb_Bunya.set(" ")
 
