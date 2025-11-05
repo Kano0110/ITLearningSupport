@@ -41,11 +41,11 @@ def create_close_window():
      clo_win.geometry("+660+350")
      clo_win.grab_set()
 
-     label_sub_kakunin = ttk.Label(clo_win,text="本当に戻りますか？")
+     wordEntry.label_sub_kakunin = ttk.Label(clo_win,text="本当に戻りますか？")
 
     # ボタン
-     button_erase = ttk.Button(clo_win,text="はい",command=quit)
-     button_return = ttk.Button(clo_win,text="いいえ",command=lambda:close_cloWindow())
+     wordEntry.button_erase = ttk.Button(clo_win,text="はい",command=quit)
+     wordEntry.button_return = ttk.Button(clo_win,text="いいえ",command=lambda:close_cloWindow())
 
     # サブウインドウを閉じる
      def close_cloWindow():
@@ -60,11 +60,11 @@ def create_reset_window():
     # 前ウィンドウを操作不能
     sub_win.grab_set()
 
-    label_sub_kakunin = ttk.Label(sub_win,text="本当にリセットしますか？")
+    wordEntry.label_sub_kakunin = ttk.Label(sub_win,text="本当にリセットしますか？")
 
     # ボタン
-    button_erase = ttk.Button(sub_win,text="はい",command=lambda:run_reset())
-    button_return = ttk.Button(sub_win,text="いいえ",command=lambda:close_subWindow())
+    wordEntry.button_erase = ttk.Button(sub_win,text="はい",command=lambda:run_reset())
+    wordEntry.button_return = ttk.Button(sub_win,text="いいえ",command=lambda:close_subWindow())
 
 
 
