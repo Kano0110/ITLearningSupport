@@ -3,8 +3,10 @@ from tkinter import *
 from tkinter import ttk
 import tkinter
 
-
+from View.wordEntryView import wordEntry
+from Controller.wordEntryCont import wordEntry
  
+
 # 変数
 
 category = ""
@@ -45,11 +47,6 @@ def create_close_window():
      button_erase = ttk.Button(clo_win,text="はい",command=quit)
      button_return = ttk.Button(clo_win,text="いいえ",command=lambda:close_cloWindow())
 
-    # 各種配置
-     label_sub_kakunin.grid(row=3,column=2)
-     button_erase.grid(row=5,column=3)
-     button_return.grid(row=5,column=1)
-
     # サブウインドウを閉じる
      def close_cloWindow():
       clo_win.destroy()
@@ -69,10 +66,7 @@ def create_reset_window():
     button_erase = ttk.Button(sub_win,text="はい",command=lambda:run_reset())
     button_return = ttk.Button(sub_win,text="いいえ",command=lambda:close_subWindow())
 
-    # 各種配置
-    label_sub_kakunin.grid(row=3,column=2)
-    button_erase.grid(row=5,column=3)
-    button_return.grid(row=5,column=1)
+
 
     # サブウインドウを閉じる
     def close_subWindow():
@@ -96,11 +90,6 @@ main_win.geometry("700x300+400+250")
 
 # いっちゃん上
 
-label = ttk.Label(
-    main_win,
-    text = 'Hello World',
-    foreground = "#000000",
-    )
     
 # 単語名入力
 label_Name = ttk.Label(main_win, text='単語名：')
@@ -134,31 +123,6 @@ cb_Bunya.set("")
 button_quit = ttk.Button(main_win,text = '戻る',command=lambda:create_close_window())
 button_reset = ttk.Button(main_win,text = 'リセット',command=lambda:create_reset_window())
 button_sousin = ttk.Button(main_win,text = '作成',command=lambda:get_id_pass())
-
-
-
-
-
-#　メインレイアウト
-#入力欄およびラベル
-label_Name.grid(row=2,column=2)
-entry_Name.grid(row=2,column=3)
-label_Kai.grid(row=3,column=2)
-entry_Kai.grid(row=3,column=3)
-
-
-#ボックスリスト
-label_Catrgory.grid(row=5, column=1)
-cb_Category.grid(row=5, column=2)
-label_Bunya.grid(row=5, column=3)
-cb_Bunya.grid(row=5, column=4)
-
-
-#各種ボタン
-button_quit.grid(row=10,column=2)
-button_reset.grid(row=10,column=3)
-button_sousin.grid(row=10,column=4)
-
 
 
 
