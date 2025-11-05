@@ -75,7 +75,7 @@ current_terms = []          # 現在の行で取得したリスト（行選択�
 # UI 作成
 root = tk.Tk()
 root.title("IT用語辞書")
-root.geometry("600x440")
+root.geometry("700x540")
 
 # 上部: 索引ボタン
 index_frame = ttk.Frame(root, padding=8)
