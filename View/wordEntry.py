@@ -15,11 +15,12 @@ maker2 = ["三井", "三菱", "住友", "安田"]
 
 # 入力された情報をどうする
 def get_id_pass():
-    name = entry_Name.get()
-    Expla = entry_Kai.get()
 
-    print('単語名：',name)
-    print('解説：',Expla)
+    Name = entry_Name.get("1.0", tkinter.END)
+    Kai = entry_Kai.get("1.0", tkinter.END)
+
+    print('単語名：',Name)
+    print('解説：',Kai)
     print('カテゴリ：',cb_Category)
     print('分野：',cb_Bunya)
 
@@ -140,23 +141,23 @@ button_sousin = ttk.Button(main_win,text = '作成',command=lambda:get_id_pass()
 
 #　メインレイアウト
 #入力欄およびラベル
-label_Name.grid(row=1,column=0)
-entry_Name.grid(row=1,column=1)
-label_Kai.grid(row=2,column=0)
-entry_Kai.grid(row=2,column=1)
+label_Name.grid(row=2,column=2)
+entry_Name.grid(row=2,column=3)
+label_Kai.grid(row=3,column=2)
+entry_Kai.grid(row=3,column=3)
 
 
 #ボックスリスト
-label_Catrgory.grid(row=4, column=0)
-cb_Category.grid(row=4, column=1)
-label_Bunya.grid(row=4, column=2)
-cb_Bunya.grid(row=4, column=3)
+label_Catrgory.grid(row=5, column=1)
+cb_Category.grid(row=5, column=2)
+label_Bunya.grid(row=5, column=3)
+cb_Bunya.grid(row=5, column=4)
 
 
 #各種ボタン
-button_quit.grid(row=5,column=0)
-button_reset.grid(row=5,column=1)
-button_sousin.grid(row=5,column=2)
+button_quit.grid(row=10,column=2)
+button_reset.grid(row=10,column=3)
+button_sousin.grid(row=10,column=4)
 
 
 
