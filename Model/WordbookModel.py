@@ -1,6 +1,7 @@
 # WordbookModel.py
 
-# import mysql.connector (コメントアウトして仮データを使用)
+# import mysql.connector
+# from mysql.connector import Error
 
 class WordbookModel:
     def __init__(self):
@@ -16,9 +17,17 @@ class WordbookModel:
         self.max_id = max(self._words.keys())
         
         # 現在表示中の単語データ
-        self.wN = "" # 初期化はfetch_word_dataで上書き
-        self.wD = "" # 初期化はfetch_word_dataで上書き
+        self.wN = self._words[1]["name"]
+        self.wD = self._words[1]["desc"]
         
+        # DB接続設定（実際には使わないが構造を示す）
+        self.db_config = {
+            "host": "127.0.0.1",
+            "user": "root",
+            "password": "team8",
+            "database": "wordbook"
+        }
+
     def fetch_word_data(self):
         """現在のIDに基づいてDBからデータを取得し、内部状態を更新する"""
         if self.current_word_id in self._words:
