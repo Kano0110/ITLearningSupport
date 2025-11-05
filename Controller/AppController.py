@@ -19,14 +19,14 @@ class AppController:
         # 全てのコントローラーとモデルを初期化
         # ModelはWordbookControllerでのみ使用
         self.wordbook_model = WordbookModel()
-        
+       
         # 画面コントローラーの辞書
         self.controllers = {
             "home": HomeController(self),
             # WordbookControllerには、自身 (AppController) と共有Modelを渡す
             "wordbook": WordbookController(self, self.wordbook_model),
             # 他のコントローラーもここに追加...
-            "create": None, 
+            "create": None,
             "quiz": None
         }
 
@@ -48,10 +48,10 @@ class AppController:
         # 2. 次のビューを表示し、それを現在のビューとして設定する
         self.current_controller = next_controller
         self.current_controller.show()
-        
+       
         # タイトルも更新
         self.root.title(f"WordBook - {view_name.capitalize()}")
-        
+       
         # (単語帳画面へ切り替える際に、WordbookControllerの初期データロードを再実行しても良い)
         if view_name == "wordbook":
              # WordbookControllerが初期データ（ID 1）を再ロードするロジックを呼ぶ
