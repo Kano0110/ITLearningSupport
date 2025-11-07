@@ -1,8 +1,8 @@
 # WordbookController.py
 
 import tkinter as tk
-from ..Model.WordbookModel import WordbookModel
-from ..View.WordbookView import WordbookView
+from Model.WordbookModel import WordbookModel
+from View.WordbookView import WordbookView
 
 class WordbookController:
     def __init__(self, root_controller, model):
