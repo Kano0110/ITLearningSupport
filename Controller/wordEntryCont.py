@@ -4,8 +4,9 @@ from tkinter import ttk
 import tkinter
 
 from Model.wordEntryModel import wordEntry
-from View.wordEntryView import wordEntry
+from View.wordEntryView import wordEntryView
 
+#Contは動作の中継役
  
 # 変数
 
@@ -28,10 +29,10 @@ def get_id_pass():
 
 # リセット動作
 def set_clear():
-    wordEntry.entry_Name.delete("1.0", tkinter.END)
-    wordEntry.entry_Kai.delete("1.0", tkinter.END)
-    wordEntry.cb_Category.set(" ")
-    wordEntry.cb_Bunya.set(" ")
+    wordEntryView.entry_Name.delete("1.0", tkinter.END)
+    wordEntryView.entry_Kai.delete("1.0", tkinter.END)
+    wordEntryView.cb_Category.set(" ")
+    wordEntryView.cb_Bunya.set(" ")
 
 # 戻るボタンの確認動作
 def create_close_window():
@@ -41,11 +42,11 @@ def create_close_window():
      clo_win.geometry("+660+350")
      clo_win.grab_set()
 
-     label_sub_kakunin = ttk.Label(clo_win,text="本当に戻りますか？")
+     wordEntryView.label_sub_kakunin = ttk.Label(clo_win,text="本当に戻りますか？")
 
     # ボタン
-     button_erase = ttk.Button(clo_win,text="はい",command=quit)
-     button_return = ttk.Button(clo_win,text="いいえ",command=lambda:close_cloWindow())
+     wordEntryView.button_erase = ttk.Button(clo_win,text="はい",command=quit)
+     wordEntryView.button_return = ttk.Button(clo_win,text="いいえ",command=lambda:close_cloWindow())
 
 
 
@@ -62,11 +63,11 @@ def create_reset_window():
     # 前ウィンドウを操作不能
     sub_win.grab_set()
 
-    label_sub_kakunin = ttk.Label(sub_win,text="本当にリセットしますか？")
+    wordEntry.label_sub_kakunin = ttk.Label(sub_win,text="本当にリセットしますか？")
 
     # ボタン
-    button_erase = ttk.Button(sub_win,text="はい",command=lambda:run_reset())
-    button_return = ttk.Button(sub_win,text="いいえ",command=lambda:close_subWindow())
+    wordEntry.button_erase = ttk.Button(sub_win,text="はい",command=lambda:run_reset())
+    wordEntry.button_return = ttk.Button(sub_win,text="いいえ",command=lambda:close_subWindow())
 
 
     # サブウインドウを閉じる

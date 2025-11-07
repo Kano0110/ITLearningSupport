@@ -3,8 +3,8 @@ from tkinter import *
 from tkinter import ttk
 import tkinter
 
-from Model.wordEntryModel import wordEntry
-from Controller.wordEntryCont import wordEntry
+from Model.wordEntryModel import wordEntryModel
+from Controller.wordEntryCont import wordEntryCont
 
 
 # メインウィンドウ
@@ -16,7 +16,7 @@ main_win.geometry("700x300+400+250")
 # いっちゃん上
 
 
-    
+
 # 単語名入力
 label_Name = ttk.Label(main_win, text='単語名：')
 entry_Name = tkinter.Text(main_win, 
@@ -35,20 +35,20 @@ entry_Kai = tkinter.Text(main_win,
 # カテゴリ選択ボックス
 label_Catrgory = ttk.Label(main_win, text='カテゴリ')
 v = StringVar()
-cb_Category = ttk.Combobox(main_win, textvariable=v, values=wordEntry.maker, width=17)
+cb_Category = ttk.Combobox(main_win, textvariable=v, values=wordEntryCont.maker, width=17)
 cb_Category.set("")
 
 # 分野選択ボックス
 label_Bunya = ttk.Label(main_win, text='分野')
 v2 = StringVar()
-cb_Bunya = ttk.Combobox(main_win, textvariable=v2, values=wordEntry.maker2, width=17)
+cb_Bunya = ttk.Combobox(main_win, textvariable=v2, values=wordEntryCont.maker2, width=17)
 cb_Bunya.set("")
 
 
 #　ボタンの動作
-button_quit = ttk.Button(main_win,text = '戻る',command=lambda:wordEntry.create_close_window())
-button_reset = ttk.Button(main_win,text = 'リセット',command=lambda:wordEntry.create_reset_window())
-button_sousin = ttk.Button(main_win,text = '作成',command=lambda:wordEntry.get_id_pass())
+button_quit = ttk.Button(main_win,text = '戻る',command=lambda:wordEntryCont.create_close_window())
+button_reset = ttk.Button(main_win,text = 'リセット',command=lambda:wordEntryCont.create_reset_window())
+button_sousin = ttk.Button(main_win,text = '作成',command=lambda:wordEntryCont.get_id_pass())
 
 
 
@@ -87,8 +87,8 @@ sub_win.geometry("+660+350")
 label_sub_kakunin = ttk.Label(sub_win,text="本当にリセットしますか？")
 
     # ボタン
-button_erase = ttk.Button(sub_win,text="はい",command=lambda:wordEntry.run_reset())
-button_return = ttk.Button(sub_win,text="いいえ",command=lambda:wordEntry.close_subWindow())
+button_erase = ttk.Button(sub_win,text="はい",command=lambda:wordEntryCont.run_reset())
+button_return = ttk.Button(sub_win,text="いいえ",command=lambda:wordEntryCont.close_subWindow())
 
     # 各種配置
 label_sub_kakunin.grid(row=3,column=2)
