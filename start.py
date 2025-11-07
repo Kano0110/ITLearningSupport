@@ -1,6 +1,7 @@
+#start.py
+
 import tkinter as tk
-# AppControllerがメインコントローラーになる
-from Controller.AppController import AppController 
+from Controller.AppController import AppController
 
 if __name__ == "__main__":
     print("Application starting...")

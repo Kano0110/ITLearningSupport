@@ -6,8 +6,8 @@
 class WordbookModel:
     def __init__(self):
         # アプリケーションの状態データ
-        self.current_word_id = 1 
-        
+        self.current_word_id = 1
+       
         # 仮データ: DBから取得したと仮定する
         self._words = {
             1: {"name": "ベルクマンの法則", "desc": "恒温動物においては、同じ種でも寒冷な地域に生息するものほど体重が大きく、近縁な種間では大型の種ほど寒冷な地域に生息する、という法則。"},
@@ -15,11 +15,11 @@ class WordbookModel:
             3: {"name": "ガウス分布", "desc": "左右対称な釣り鐘型の確率分布であり、自然現象や社会現象によく現れることから、正規分布とも呼ばれる。"}
         }
         self.max_id = max(self._words.keys())
-        
+       
         # 現在表示中の単語データ
         self.wN = self._words[1]["name"]
         self.wD = self._words[1]["desc"]
-        
+       
         # DB接続設定（実際には使わないが構造を示す）
         self.db_config = {
             "host": "127.0.0.1",

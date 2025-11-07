@@ -26,7 +26,7 @@ class HomeView(tk.Frame):
         # 単語帳を見るボタン (遷移2)
         # wordlistへ遷移
         view_button = ttk.Button(self, text="単語帳を見る", 
-                                 command=self.controller.go_to_view_wordlist)
+                                 command=self.controller.go_to_wordlist)
         view_button.pack(pady=10, ipadx=20)
 
         # 問題を解くボタン (遷移3)
