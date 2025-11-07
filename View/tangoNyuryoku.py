@@ -25,8 +25,8 @@ def get_id_pass():
 
 # リセット動作
 def set_clear():
-    text_Name.set('')
-    text_Kai.set('')
+    entry_Name.delete("1.0", tkinter.END)
+    entry_Kai.delete("1.0", tkinter.END)
     cb_Category.set(" ")
     cb_Bunya.set(" ")
 
@@ -35,6 +35,7 @@ def create_close_window():
      #新規ウィンドウを表示
      clo_win = tkinter.Toplevel(main_win)
      clo_win.title("戻る")
+     clo_win.geometry("+660+350")
      clo_win.grab_set()
 
      label_sub_kakunin = ttk.Label(clo_win,text="本当に戻りますか？")
@@ -57,6 +58,7 @@ def create_reset_window():
     # 新規ウィンドウを表示
     sub_win = tkinter.Toplevel(main_win)
     sub_win.title("リセット確認")
+    sub_win.geometry("+660+350")
     # 前ウィンドウを操作不能
     sub_win.grab_set()
 
@@ -84,7 +86,7 @@ def create_reset_window():
 # メインウィンドウ
 main_win = Tk()
 main_win.title("単語登録")
-
+main_win.geometry("700x300+400+250")
 
 
 
@@ -101,17 +103,15 @@ label = ttk.Label(
     
 # 単語名入力
 label_Name = ttk.Label(main_win, text='単語名：')
-text_Name = StringVar()
-entry_Name = ttk.Entry(main_win, 
-                      textvariable=text_Name,
-                      width=40)
+entry_Name = tkinter.Text(main_win, 
+                      width=40,
+                      height=1)
 
 # 単語の解説
 label_Kai = ttk.Label(main_win, text='解説：')
-text_Kai = StringVar()
-entry_Kai = ttk.Entry(main_win, 
-                     textvariable=text_Kai,
-                     width=40)
+entry_Kai = tkinter.Text(main_win, 
+                     width=40,
+                     height=10)
 
 
 
