@@ -3,9 +3,14 @@
 # from tkinter import ttk
 # import tkinter
 
-from View.wordEntryView import wordEntry
-from Controller.wordEntryCont import wordEntry
+from View.wordEntryView import wordEntryView
+from Controller.wordEntryCont import wordEntryCont
 
+
+# 変数
+category = ""
+maker = ["松下", "日立", "東芝", "ソニー", "シャープ"]
+maker2 = ["三井", "三菱", "住友", "安田"]
 
 
 # main_win = Tk()
