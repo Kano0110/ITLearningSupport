@@ -1,3 +1,5 @@
+#wordlist_view.py
+
 import sys
 import os
 
