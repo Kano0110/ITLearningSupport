@@ -8,7 +8,7 @@ class WordbookView(tk.Frame):
         super().__init__(master)
         self.master.title("WordBookPage")
         self.controller = controller
-       
+        
         # UI状態を管理するインスタンス変数 (Viewの責務)
         self.name_is_visible = True
         self.desc_is_visible = True

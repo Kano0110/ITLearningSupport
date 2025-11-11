@@ -1,19 +1,22 @@
+#wordlist_controller.py
 """
 Controller層: ModelとViewの橋渡し、ビジネスロジックの制御
 """
 from typing import List, Optional, Callable
 from Model.wordlist_model import WordListModel
+from View.wordlist_view import WordListView
 
 
 class WordListController:
     """IT用語辞書のコントローラ"""
     
-    def __init__(self):
+    def __init__(self,root_controller,model):
         self.model = WordListModel()
         self.current_category: Optional[str] = None
         self.current_search_query: str = ""
         self.use_yomi_filter: bool = True  # 読み仮名でフィルタするかどうか
         self.view_update_callback: Optional[Callable] = None
+        self.view = WordListView(root_controller.root, self)
     
     def set_view_update_callback(self, callback: Callable):
         """
