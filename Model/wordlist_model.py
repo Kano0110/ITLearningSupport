@@ -1,3 +1,4 @@
+#WordModel.py
 """
 Model層: データベースアクセスとビジネスロジックを担当
 """
@@ -29,13 +30,13 @@ DB_CANDIDATES = [
 ]
 
 
-class WordListModel:
+class WordListModel(BaseModel):
     """IT用語辞書のデータモデル"""
     
     def __init__(self):
-        self.db_path = self._find_db_path()
-        self._cache_all_terms = None  # 全件キャッシュ
-    
+        super().__init__()
+        self._cache_all_terms: Optional[List[str]] = None  # 全件キャッシュ
+     
     def _find_db_path(self) -> Optional[str]:
         """DBファイルのパスを検索"""
         for p in DB_CANDIDATES:
