@@ -11,10 +11,11 @@ class HomeController:
 
     # --- 画面遷移ハンドラー ---
 
+# HomeController.py の該当メソッド
     def go_to_wordentry(self):
         """「単語帳を作る」ボタンが押された時の処理"""
         print("Controller: 単語帳作成画面へ遷移を要求")
-        self.root_controller.switch_view("wordEntry")
+        self.root_controller.switch_view("wordentry")
 
     def go_to_wordlist(self):
         """「単語帳を見る」ボタンが押された時の処理 -> WordListへ遷移"""
