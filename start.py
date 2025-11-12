@@ -1,4 +1,6 @@
 import tkinter as tk
+#import logging
+#logging.basicConfig(level=logging.INFO)
 from Controller.AppController import AppController
 
 if __name__ == "__main__":

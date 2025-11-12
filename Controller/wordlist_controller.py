@@ -1,154 +1,106 @@
-#wordlist_controller.py
-"""
-Controller層: ModelとViewの橋渡し、ビジネスロジックの制御
-"""
+# Controller/wordlist_controller.py
 from typing import List, Optional, Callable
 from Model.wordlist_model import WordListModel
-from View.wordlist_view import WordListView
-
 
 class WordListController:
-    """IT用語辞書のコントローラ"""
-    
-    def __init__(self,root_controller,model):
-        self.model = WordListModel()
+    def __init__(self, root_controller, model: Optional[WordListModel] = None):
+        self.app = root_controller
+        self.model = model if model is not None else WordListModel()
         self.current_category: Optional[str] = None
         self.current_search_query: str = ""
-        self.use_yomi_filter: bool = True  # 読み仮名でフィルタするかどうか
+        self.use_yomi_filter: bool = True
         self.view_update_callback: Optional[Callable] = None
-        self.view = WordListView(root_controller.root, self)
-    
+        self.view = None  # 遅延生成
+
+    def _ensure_view(self):
+        if self.view is None:
+            from View.wordlist_view import WordListView
+            self.view = WordListView(self.app.root, self)
+            # ビューが作られたら直ちに初期データを通知して描画させる
+            try:
+                # initialize() は DB 存在チェックと最初の描画呼び出しを行う
+                self.initialize()
+            except Exception as e:
+                print(f"Warning: ensure_view initialize failed: {e}")
+
     def set_view_update_callback(self, callback: Callable):
-        """
-        Viewの更新用コールバックを設定
-        
-        Args:
-            callback: View更新時に呼び出される関数
-        """
+        """View がコールバックを登録したときに直ちに現在データを渡す"""
         self.view_update_callback = callback
-    
+        try:
+            # 可能ならキャッシュ済みデータを渡す（無ければ model から取得）
+            if getattr(self, "_last_terms", None) is not None:
+                callback(self._last_terms, None)
+            else:
+                terms = self.model.get_all_terms()
+                self._last_terms = terms
+                callback(terms, None)
+        except Exception as e:
+            print(f"Warning: set_view_update_callback failed to push initial data: {e}")
+
     def _notify_view(self, terms: List[str], message: Optional[str] = None):
-        """
-        Viewに更新を通知
-        
-        Args:
-            terms: 表示する用語のリスト
-            message: 空の場合に表示するメッセージ
-        """
+        self._ensure_view()
+        # キャッシュ
+        self._last_terms = terms
         if self.view_update_callback:
             self.view_update_callback(terms, message)
-    
+        else:
+            if hasattr(self.view, "update_list"):
+                self.view.update_list(terms, message)
+
     def initialize(self):
-        """
-        初期化処理（アプリ起動時）
-        """
         if not self.model.is_db_available():
             self._notify_view([], "データベースが見つかりません")
             return False
-        
-        # 全件を取得してキャッシュ
         all_terms = self.model.get_all_terms()
         self._notify_view(all_terms)
         return True
-    
+
     def select_category(self, category: str):
-        """
-        カテゴリ（五十音行）を選択
-        
-        Args:
-            category: カテゴリ名（'あ', 'か', 'さ'など）
-        """
         self.current_category = category
-        self.current_search_query = ""  # 検索をクリア
-        
-        # 読み仮名（yomi）でフィルタするか、categoryカラムでフィルタするか
+        self.current_search_query = ""
         if self.use_yomi_filter:
             terms = self.model.get_terms_by_yomi(category)
         else:
             terms = self.model.get_terms_by_category(category)
-        
         if not terms:
             message = f"{category}行の用語はありません"
             self._notify_view([], message)
         else:
             self._notify_view(terms)
-    
+
     def clear_category(self):
-        """
-        カテゴリ選択を解除（全件表示に戻る）
-        """
         self.current_category = None
         self.apply_search(self.current_search_query)
-    
+
     def apply_search(self, query: str):
-        """
-        検索を適用
-        
-        Args:
-            query: 検索クエリ
-        """
         self.current_search_query = query.strip()
-        
         if self.current_search_query:
-            # 検索がある場合は全件から検索（カテゴリ選択は無視）
             terms = self.model.search_terms(self.current_search_query)
             if not terms:
                 self._notify_view([], "該当する用語はありません")
             else:
                 self._notify_view(terms)
         else:
-            # 検索が空の場合
             if self.current_category:
-                # カテゴリが選択されていればそのカテゴリを表示
                 self.select_category(self.current_category)
             else:
-                # カテゴリ未選択なら全件表示
                 all_terms = self.model.get_all_terms()
                 self._notify_view(all_terms)
-    
+
     def clear_search(self):
-        """
-        検索をクリア
-        """
         self.apply_search("")
-    
-    def get_term_detail(self, word_name: str) -> Optional[dict]:
-        """
-        用語の詳細情報を取得
-        
-        Args:
-            word_name: 用語名
-            
-        Returns:
-            用語の詳細情報、見つからない場合はNone
-        """
+
+    def get_term_detail(self, word_name: str):
         return self.model.get_term_detail(word_name)
-    
-    def get_available_categories(self) -> List[str]:
-        """
-        利用可能なカテゴリのリストを取得
-        
-        Returns:
-            カテゴリのリスト
-        """
+
+    def get_available_categories(self):
         return self.model.get_categories()
-    
-    def get_stats(self) -> dict:
-        """
-        統計情報を取得
-        
-        Returns:
-            統計情報の辞書
-        """
+
+    def get_stats(self):
         return self.model.get_stats()
-    
+
     def refresh_data(self):
-        """
-        データを再読み込み（キャッシュをクリア）
-        """
         self.model.get_all_terms(force_refresh=True)
-        
-        # 現在の状態に応じて再表示
         if self.current_search_query:
             self.apply_search(self.current_search_query)
         elif self.current_category:
@@ -156,77 +108,74 @@ class WordListController:
         else:
             all_terms = self.model.get_all_terms()
             self._notify_view(all_terms)
-    
+
     def is_ready(self) -> bool:
-        """
-        コントローラが使用可能な状態かチェック
-        
-        Returns:
-            使用可能ならTrue
-        """
         return self.model.is_db_available()
-    
-    def add_term(self, word_name: str, yomi: str = None, explain: str = None,
-                 tag: str = None, category: str = None) -> bool:
-        """
-        新しい用語を追加
-        
-        Args:
-            word_name: 単語名
-            yomi: 読み仮名
-            explain: 説明
-            tag: タグ
-            category: カテゴリ
-            
-        Returns:
-            成功した場合True
-        """
-        success = self.model.add_term(word_name, yomi, explain, tag, category)
-        if success:
-            self.refresh_data()
-        return success
-    
-    def update_term(self, word_name: str, yomi: str = None, explain: str = None,
-                   tag: str = None, category: str = None) -> bool:
-        """
-        用語を更新
-        
-        Args:
-            word_name: 単語名
-            yomi: 読み仮名
-            explain: 説明
-            tag: タグ
-            category: カテゴリ
-            
-        Returns:
-            成功した場合True
-        """
-        success = self.model.update_term(word_name, yomi, explain, tag, category)
-        if success:
-            self.refresh_data()
-        return success
-    
-    def delete_term(self, word_name: str) -> bool:
-        """
-        用語を削除
-        
-        Args:
-            word_name: 単語名
-            
-        Returns:
-            成功した場合True
-        """
-        success = self.model.delete_term(word_name)
-        if success:
-            self.refresh_data()
-        return success
-    
+
     def toggle_filter_mode(self):
-        """
-        フィルタモード（yomi/category）を切り替え
-        """
         self.use_yomi_filter = not self.use_yomi_filter
-        
-        # 現在カテゴリが選択されていれば再適用
         if self.current_category:
             self.select_category(self.current_category)
+
+    def show(self):
+    # view が未生成なら生成して初期描画させる
+        try:
+            self._ensure_view()
+        except Exception as e:
+            print(f"Warning: show failed to ensure view: {e}")
+        # view が生成されていれば必ず表示処理を呼ぶ
+        if hasattr(self.view, "show"):
+            try:
+                self.view.show()
+            except Exception as e:
+                print(f"Warning: view.show() failed: {e}")
+        else:
+            # デバッグ用フォールバック: view が None のままなら初期データを直接通知しておく
+            try:
+                all_terms = self.model.get_all_terms()
+                self._notify_view(all_terms)
+            except Exception as e:
+                print(f"Warning: fallback notify failed: {e}")
+
+    def hide(self):
+        if hasattr(self.view, "hide"):
+            self.view.hide()
+
+    def on_term_selected(self, word_name: str):
+        """用語が選択されたときの処理。
+        AppController に wordbook 画面を開くよう依頼する。
+        """
+        # 1) 取得可能なら詳細を取得してキャッシュ（任意）
+        detail = self.get_term_detail(word_name)
+
+        # 2) AppController に遷移依頼（選択語を渡す）
+        if hasattr(self.app, "open_wordbook"):
+            # AppController 側のヘルパに委譲（推奨）
+            try:
+                self.app.open_wordbook(word_name)
+                return
+            except Exception:
+                pass
+
+        # 3) 既存の switch_view を使う簡易フォールバック: open → load_term を呼ぶ
+        try:
+            self.app.switch_view("wordbook")
+            # 次の controller が生成された直後に load_term を呼べるようにする
+            if hasattr(self.app.current_controller, "load_term"):
+                self.app.current_controller.load_term(word_name)
+        except Exception as e:
+            print(f"Error: Failed to open wordbook for '{word_name}': {e}")
+            # フォールバックでローカル表示
+            if detail:
+                if hasattr(self, "_ensure_view"):
+                    # もし view があるならローカルで表示
+                    try:
+                        self._ensure_view()
+                        if hasattr(self.view, "_show_detail_window"):
+                            self.view._show_detail_window(detail)
+                            return
+                    except Exception:
+                        pass
+                # 最終手段で messagebox
+                from tkinter import messagebox
+                messagebox.showwarning("警告", f"'{word_name}'の詳細情報を表示できませんでした")
