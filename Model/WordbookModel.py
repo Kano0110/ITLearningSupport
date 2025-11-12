@@ -1,80 +1,167 @@
-# WordbookModel.py
-"""
-Model層: 単語の詳細取得、および仮の「次へ/前へ」ロジック
-"""
+# Model/WordbookModel.py
+from typing import Optional, Dict
 from Model.BaseModel import BaseModel
-from typing import List, Dict, Optional
+import logging
 
-class WordBookModel(BaseModel):
-    
-    def __init__(self):
-        super().__init__()
-        # 状態データ（DB実装前の仮データ）
-        self.current_word_id = 1
-        self._words = {
-             1: {"name": "ベルクマンの法則", "desc": "恒温動物においては、同じ種でも寒冷な地域に生息するものほど体重が大きく、近縁な種間では大型の種ほど寒冷な地域に生息する、という法則。"},
-             2: {"name": "アレンの法則", "desc": "恒温動物の体の一部（耳、尾、四肢など）は、寒い地域に生息するものほど、熱放散を減らすために短くなるという法則。"},
-             3: {"name": "ガウス分布", "desc": "左右対称な釣り鐘型の確率分布であり、自然現象や社会現象によく現れることから、正規分布とも呼ばれる。"}
-         }
-        self.max_id = max(self._words.keys())
-        self.wN = self._words[1]["name"]
-        self.wD = self._words[1]["desc"]
-        
-    def get_term_detail(self, word_name: str) -> Optional[Dict]:
-        """
-        特定の用語の詳細情報を取得
-        """
-        conn = self._get_connection()
-        if not conn:
-            return None
-        
+logger = logging.getLogger(__name__)
+
+class WordbookModel(BaseModel):
+    def __init__(self, db_path: Optional[str] = None, use_stub: bool = False):
+        super().__init__(db_path=db_path)
+        self.use_stub = use_stub
+        # stub データ
+        self._stub_words = {
+            1: {"id":1, "name":"ベルクマンの法則", "desc":"..."},
+            2: {"id":2, "name":"アレンの法則", "desc":"..."}
+        }
+        # 表示中の状態（インスタンス属性として初期化）
+        self.current_word_id: Optional[int] = None
+        self.wN: str = ""
+        self.wD: str = ""
+
+    def get_by_id(self, question_id: int) -> Optional[Dict]:
+        if self.use_stub:
+            return self._stub_words.get(question_id)
         try:
-            cur = conn.cursor()
-            sql = """
-                SELECT question_id, word_cloud_id, word_name, explain, tag, category, yomi
-                FROM terms 
-                WHERE word_name = ?
-                LIMIT 1;
-            """
-            cur.execute(sql, (word_name,))
-            row = cur.fetchone()
-            if row:
-                return dict(row)
+            with self.get_conn() as conn:
+                cur = conn.execute(
+                    "SELECT question_id AS id, word_name AS name, explain AS desc, tag, category, yomi FROM terms WHERE question_id = ? LIMIT 1;",
+                    (question_id,)
+                )
+                row = cur.fetchone()
+                return dict(row) if row else None
+        except Exception:
+            logger.exception("ID検索エラー")
             return None
-        except Exception as e:
-            print(f"詳細取得エラー: {e}")
-            return None
-        finally:
-            conn.close()
 
-    # --- 以下は仮のWordbookModelから移行したロジック (DBベースに要修正) ---
-    
-    def fetch_word_data(self):
-        """現在のIDに基づいてDBからデータを取得し、内部状態を更新する (仮実装)"""
-        if self.current_word_id in self._words:
-            data = self._words[self.current_word_id]
-            self.wN = data["name"]
-            self.wD = data["desc"]
-            print(f"Model: ID {self.current_word_id} のデータを取得完了。")
+    def get_term_detail(self, word_name: str) -> Optional[Dict]:
+        if self.use_stub:
+            for v in self._stub_words.values():
+                if v["name"] == word_name:
+                    return v
+            return None
+        try:
+            with self.get_conn() as conn:
+                cur = conn.execute(
+                    "SELECT question_id AS id, word_name AS name, explain AS desc, tag, category, yomi FROM terms WHERE word_name = ? LIMIT 1;",
+                    (word_name,)
+                )
+                row = cur.fetchone()
+                return dict(row) if row else None
+        except Exception:
+            logger.exception("詳細取得エラー")
+            return None
+
+    def update_term(self, question_id: int, word_name: str = None, explain: str = None,
+                    tag: str = None, category: str = None) -> bool:
+        if self.use_stub:
+            if question_id in self._stub_words:
+                w = self._stub_words[question_id]
+                if word_name: w["name"] = word_name
+                if explain: w["desc"] = explain
+                return True
+            return False
+        try:
+            with self.get_conn() as conn:
+                conn.execute(
+                    "UPDATE terms SET word_name = COALESCE(?, word_name), explain = COALESCE(?, explain), tag = COALESCE(?, tag), category = COALESCE(?, category) WHERE question_id = ?;",
+                    (word_name, explain, tag, category, question_id)
+                )
             return True
-        else:
-            self.wN = "データなし"
-            self.wD = "該当する単語IDが見つかりません。"
+        except Exception:
+            logger.exception("更新エラー")
             return False
 
-    def go_to_next_word(self):
-        """次の単語IDへ進める (仮実装)"""
-        if self.current_word_id < self.max_id:
-            self.current_word_id += 1
-            self.fetch_word_data()
-        else:
-            print("Model: これ以上、次の単語はありません。")
+    def delete_term(self, question_id: int) -> bool:
+        if self.use_stub:
+            return self._stub_words.pop(question_id, None) is not None
+        try:
+            with self.get_conn() as conn:
+                conn.execute("DELETE FROM terms WHERE question_id = ?;", (question_id,))
+            return True
+        except Exception:
+            logger.exception("削除エラー")
+            return False
 
-    def go_to_previous_word(self):
-        """前の単語IDへ戻る (仮実装)"""
-        if self.current_word_id > 1:
-            self.current_word_id -= 1
-            self.fetch_word_data()
-        else:
-            print("Model: これ以上、前の単語はありません。")
-            
+    # ---------- ここから表示用の補助メソッドを追加 ----------
+    def fetch_word_data(self) -> Optional[Dict]:
+        """current_word_id に基づき self.wN/self.wD を更新して返す"""
+        if self.current_word_id is None:
+            return None
+        if self.use_stub:
+            item = self._stub_words.get(self.current_word_id)
+            if not item:
+                return None
+            self.wN = item.get("name", "")
+            self.wD = item.get("desc", "")
+            return item
+        try:
+            row = self.get_by_id(self.current_word_id)
+            if not row:
+                return None
+            self.wN = row.get("name") or row.get("word_name") or ""
+            self.wD = row.get("desc") or row.get("explain") or ""
+            return row
+        except Exception:
+            logger.exception("fetch_word_data error")
+            return None
+
+    def _get_next_id(self, current_id: int) -> Optional[int]:
+        """current_id より大きい最小の question_id を返す"""
+        if self.use_stub:
+            ids = sorted(self._stub_words.keys())
+            for i in ids:
+                if i > current_id:
+                    return i
+            return None
+        try:
+            with self.get_conn() as conn:
+                cur = conn.execute(
+                    "SELECT question_id FROM terms WHERE question_id > ? ORDER BY question_id ASC LIMIT 1;",
+                    (current_id,)
+                )
+                row = cur.fetchone()
+                return int(row["question_id"]) if row else None
+        except Exception:
+            logger.exception("_get_next_id error")
+            return None
+
+    def _get_prev_id(self, current_id: int) -> Optional[int]:
+        """current_id より小さい最大の question_id を返す"""
+        if self.use_stub:
+            ids = sorted(self._stub_words.keys(), reverse=True)
+            for i in ids:
+                if i < current_id:
+                    return i
+            return None
+        try:
+            with self.get_conn() as conn:
+                cur = conn.execute(
+                    "SELECT question_id FROM terms WHERE question_id < ? ORDER BY question_id DESC LIMIT 1;",
+                    (current_id,)
+                )
+                row = cur.fetchone()
+                return int(row["question_id"]) if row else None
+        except Exception:
+            logger.exception("_get_prev_id error")
+            return None
+
+    def go_to_next_word(self) -> bool:
+        """次の単語へ移動して fetch する。移動できれば True"""
+        if self.current_word_id is None:
+            return False
+        next_id = self._get_next_id(self.current_word_id)
+        if not next_id:
+            return False
+        self.current_word_id = next_id
+        return self.fetch_word_data() is not None
+
+    def go_to_previous_word(self) -> bool:
+        """前の単語へ移動して fetch する。移動できれば True"""
+        if self.current_word_id is None:
+            return False
+        prev_id = self._get_prev_id(self.current_word_id)
+        if not prev_id:
+            return False
+        self.current_word_id = prev_id
+        return self.fetch_word_data() is not None
