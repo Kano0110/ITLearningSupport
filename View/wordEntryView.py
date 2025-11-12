@@ -1,105 +1,65 @@
-# インポート
-from tkinter import *
-from tkinter import ttk
-import tkinter
+# View/WordEntryView.py
+import tkinter as tk
+from tkinter import ttk, messagebox
 
-from Model.wordEntryModel import wordEntryModel
-from Controller.wordEntryCont import wordEntryCont
+class WordEntryView:
+    """単語登録画面の View。controller を受け取り、ボタン操作は controller のメソッドを呼ぶ。"""
 
-class wordEntryView:
-    # メインウィンドウ
-    main_win = Tk()
-    main_win.title("単語登録")
-    main_win.geometry("700x300+400+250")
-
-
-    # いっちゃん上
-
-
-
-    # 単語名入力
-    label_Name = ttk.Label(main_win, text='単語名：')
-    entry_Name = tkinter.Text(main_win, 
-                        width=40,
-                        height=1)
-
-    # 単語の解説
-    label_Kai = ttk.Label(main_win, text='解説：')
-    entry_Kai = tkinter.Text(main_win, 
-                        width=40,
-                        height=10)
+    def __init__(self, root: tk.Tk, controller):
+        self.root = root
+        self.controller = controller
+        # ここでは frame を持たせて pack/forget をコントローラから呼べるようにする
+        self.frame = ttk.Frame(self.root)
+        self.entry_Name = tk.Text(self.frame, width=40, height=1)
+        self.entry_Kai = tk.Text(self.frame, width=40, height=10)
+        self.cb_Category = ttk.Combobox(self.frame, values=[], width=17)
+        self.cb_Bunya = ttk.Combobox(self.frame, values=[], width=17)
+        self._build_ui()
 
 
+    def _build_ui(self):
+        self.root.title("単語登録")
+        ttk.Label(self.frame, text='単語名：').place(x=60, y=30)
+        self.entry_Name.place(x=150, y=30)
+        ttk.Label(self.frame, text='解説：').place(x=65, y=120)
+        self.entry_Kai.place(x=150, y=60)
+        ttk.Label(self.frame, text='カテゴリ').place(x=70, y=220)
+        self.cb_Category.place(x=120, y=220)
+        ttk.Label(self.frame, text='分野').place(x=300, y=220)
+        self.cb_Bunya.place(x=350, y=220)
+        ttk.Button(self.frame, text='戻る', command=lambda: self.controller.create_close_window()).place(x=40, y=340)
+        ttk.Button(self.frame, text='リセット', command=lambda: self.controller.create_reset_window()).place(x=250, y=340)
+        ttk.Button(self.frame, text='作成', command=lambda: self.controller.get_id_pass()).place(x=490, y=340)
 
+    def show(self):
+        """この View を表示する（controller.show から呼ばれる）。"""
+        self.frame.pack(expand=True, fill='both')
 
-    # カテゴリ選択ボックス
-    label_Catrgory = ttk.Label(main_win, text='カテゴリ')
-    v = StringVar()
-    cb_Category = ttk.Combobox(main_win, textvariable=v, values=wordEntryCont.maker, width=17)
-    cb_Category.set("")
+    def close(self):
+        """表示を閉じる（pack_forget）。"""
+        self.frame.pack_forget()
 
-    # 分野選択ボックス
-    label_Bunya = ttk.Label(main_win, text='分野')
-    v2 = StringVar()
-    cb_Bunya = ttk.Combobox(main_win, textvariable=v2, values=wordEntryCont.maker2, width=17)
-    cb_Bunya.set("")
+    def get_name(self):
+        return self.entry_Name.get("1.0", tk.END).strip()
 
+    def get_explain(self):
+        return self.entry_Kai.get("1.0", tk.END).strip()
 
-    #　ボタンの動作
-    button_quit = ttk.Button(main_win,text = '戻る',command=lambda:wordEntryCont.create_close_window())
-    button_reset = ttk.Button(main_win,text = 'リセット',command=lambda:wordEntryCont.create_reset_window())
-    button_sousin = ttk.Button(main_win,text = '作成',command=lambda:wordEntryCont.get_id_pass())
+    def get_category(self):
+        return self.cb_Category.get()
 
+    def get_maker(self):
+        return self.cb_Bunya.get()
 
+    def clear_inputs(self):
+        """入力欄をクリアする（リセット処理）。"""
+        self.entry_Name.delete("1.0", tk.END)
+        self.entry_Kai.delete("1.0", tk.END)
+        self.cb_Category.set("")
+        self.cb_Bunya.set("")
 
+    def show_error(self, msg: str):
+        messagebox.showerror("エラー", msg)
 
-
-    #　メインレイアウト
-    #入力欄およびラベル
-    label_Name.grid(row=2,column=2)
-    entry_Name.grid(row=2,column=3)
-    label_Kai.grid(row=3,column=2)
-    entry_Kai.grid(row=3,column=3)
-
-
-    #ボックスリスト
-    label_Catrgory.grid(row=5, column=1)
-    cb_Category.grid(row=5, column=2)
-    label_Bunya.grid(row=5, column=3)
-    cb_Bunya.grid(row=5, column=4)
-
-
-    #各種ボタン
-    button_quit.grid(row=10,column=2)
-    button_reset.grid(row=10,column=3)
-    button_sousin.grid(row=10,column=4)
-
-        # 各種配置
-
-
-
-
-    sub_win = tkinter.Toplevel(main_win)
-    sub_win.title("リセット確認")
-    sub_win.geometry("+660+350")
-
-
-    label_sub_kakunin = ttk.Label(sub_win,text="本当にリセットしますか？")
-
-        # ボタン
-    button_erase = ttk.Button(sub_win,text="はい",command=lambda:wordEntryCont.run_reset())
-    button_return = ttk.Button(sub_win,text="いいえ",command=lambda:wordEntryCont.close_subWindow())
-
-        # 各種配置
-    label_sub_kakunin.grid(row=3,column=2)
-    button_erase.grid(row=5,column=3)
-    button_return.grid(row=5,column=1)
-
-    label_sub_kakunin.grid(row=3,column=2)
-    button_erase.grid(row=5,column=3)
-    button_return.grid(row=5,column=1)
-
-
-
-
-    main_win.mainloop()
+    def show_success(self, msg: str):
+        messagebox.showinfo("完了", msg)
