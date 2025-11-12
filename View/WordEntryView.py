@@ -16,19 +16,20 @@ class WordEntryView:
         self.cb_Bunya = ttk.Combobox(self.frame, values=[], width=17)
         self._build_ui()
 
+
     def _build_ui(self):
         self.root.title("単語登録")
-        ttk.Label(self.frame, text='単語名：').grid(row=2, column=2)
-        self.entry_Name.grid(row=2, column=3)
-        ttk.Label(self.frame, text='解説：').grid(row=3, column=2)
-        self.entry_Kai.grid(row=3, column=3)
-        ttk.Label(self.frame, text='カテゴリ').grid(row=5, column=1)
-        self.cb_Category.grid(row=5, column=2)
-        ttk.Label(self.frame, text='分野').grid(row=5, column=3)
-        self.cb_Bunya.grid(row=5, column=4)
-        ttk.Button(self.frame, text='戻る', command=lambda: self.controller.create_close_window()).grid(row=10, column=2)
-        ttk.Button(self.frame, text='リセット', command=lambda: self.controller.create_reset_window()).grid(row=10, column=3)
-        ttk.Button(self.frame, text='作成', command=lambda: self.controller.get_id_pass()).grid(row=10, column=4)
+        ttk.Label(self.frame, text='単語名：').place(x=60, y=30)
+        self.entry_Name.place(x=150, y=30)
+        ttk.Label(self.frame, text='解説：').place(x=65, y=120)
+        self.entry_Kai.place(x=150, y=60)
+        ttk.Label(self.frame, text='カテゴリ').place(x=70, y=220)
+        self.cb_Category.place(x=120, y=220)
+        ttk.Label(self.frame, text='分野').place(x=300, y=220)
+        self.cb_Bunya.place(x=350, y=220)
+        ttk.Button(self.frame, text='戻る', command=lambda: self.controller.create_close_window()).place(x=40, y=340)
+        ttk.Button(self.frame, text='リセット', command=lambda: self.controller.create_reset_window()).place(x=250, y=340)
+        ttk.Button(self.frame, text='作成', command=lambda: self.controller.get_id_pass()).place(x=490, y=340)
 
     def show(self):
         """この View を表示する（controller.show から呼ばれる）。"""
