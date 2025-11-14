@@ -111,21 +111,36 @@ class WordListView:
         self.canvas.pack(side='left', fill='both', expand=True)
         v_scroll.pack(side='right', fill='y')
 
-        self.scrollable_frame = ttk.Frame(self.canvas)
-        self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor='nw')
+        # 内部フレームは白背景の tk.Frame にして、白い領域に単語を描画する
+        self.scrollable_frame = tk.Frame(self.canvas, bg='white')
+        self._canvas_window = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor='nw')
 
         # 中身のサイズ変化に合わせて scrollregion を更新する
         self.scrollable_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
-        
+        # Canvas の幅が変わったら内部ウィンドウの幅を合わせる（ラベルを横幅いっぱいにするため）
+        self.canvas.bind("<Configure>", lambda e: self.canvas.itemconfig(self._canvas_window, width=e.width))
+
         # マウスホイールスクロール機能を追加
         self.canvas.bind("<MouseWheel>", self._on_mousewheel)
         self.canvas.bind("<Button-4>", self._on_mousewheel)  # Linux scroll up
         self.canvas.bind("<Button-5>", self._on_mousewheel)  # Linux scroll down
 
     def _on_mousewheel(self, event):
-        """マウスホイールスクロール処理"""
+        """マウスホイールスクロール処理
+        
+        内容がCanvas高さより小さい場合はスクロール操作を無視します。
+        """
         # Windows: event.delta > 0 で上方向、< 0 で下方向
         # Linux: Button-4 で上方向、Button-5 で下方向
+        
+        # Canvas と内容フレームの高さを取得
+        canvas_height = self.canvas.winfo_height()
+        content_height = self.scrollable_frame.winfo_reqheight()
+        
+        # 内容がCanvas以下の場合はスクロール不可
+        if content_height <= canvas_height:
+            return
+        
         if event.num == 5 or event.delta < 0:
             # 下方向スクロール
             self.canvas.yview_scroll(3, "units")
@@ -134,28 +149,35 @@ class WordListView:
             self.canvas.yview_scroll(-3, "units")
 
     def display_terms(self, terms: list, message: str = None):
-        
         for widget in self.scrollable_frame.winfo_children():
             widget.destroy()
+
         if terms:
+            # 左から順に埋める 3 列レイアウト（行優先）
+            NUM_COLUMNS = 3
             for i, name in enumerate(terms):
-                row_index = i % MAX_ROWS_PER_COLUMN
-                col_index = i // MAX_ROWS_PER_COLUMN
-                lbl = ttk.Label(self.scrollable_frame, text=name, padding=(6, 5), cursor='hand2')
+                col_index = i % NUM_COLUMNS
+                row_index = i // NUM_COLUMNS
+                lbl = ttk.Label(
+                    self.scrollable_frame,
+                    text=name,
+                    padding=(6, 5),
+                    cursor='hand2',
+                    anchor='center',
+                    justify='center'
+                )
                 lbl.grid(row=row_index, column=col_index, sticky='ew', padx=5, pady=2)
                 lbl.bind('<Button-1>', lambda e, term=name: self.on_term_click(term))
                 lbl.bind('<Enter>', lambda e, l=lbl: l.configure(foreground='blue'))
                 lbl.bind('<Leave>', lambda e, l=lbl: l.configure(foreground='black'))
-                # マウスホイールスクロール機能を追加
+                # マウスホイールイベントも受け取らせる
                 lbl.bind('<MouseWheel>', self._on_mousewheel)
-                lbl.bind('<Button-4>', self._on_mousewheel)  # Linux scroll up
-                lbl.bind('<Button-5>', self._on_mousewheel)  # Linux scroll down
-            
-            # 各列を中央に配置
-            if terms:
-                max_col = max((i // MAX_ROWS_PER_COLUMN) for i in range(len(terms)))
-                for col in range(max_col + 1):
-                    self.scrollable_frame.columnconfigure(col, weight=1)
+                lbl.bind('<Button-4>', self._on_mousewheel)
+                lbl.bind('<Button-5>', self._on_mousewheel)
+
+            # 各列を均等に広げる
+            for col in range(NUM_COLUMNS):
+                self.scrollable_frame.columnconfigure(col, weight=1)
         else:
             if message is None:
                 message = "用語が見つかりません"
