@@ -17,6 +17,7 @@ class WordEntryView:
         self._build_ui()
 
 
+#変えたんだから反映させろぉぉぉぉおおおおおおおおお
     def _build_ui(self):
         self.root.title("単語登録")
         ttk.Label(self.frame, text='単語名：').place(x=60, y=30)
