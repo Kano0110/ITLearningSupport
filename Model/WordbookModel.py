@@ -85,7 +85,7 @@ class WordbookModel(BaseModel):
 
     # ---------- ここから表示用の補助メソッドを追加 ----------
     def fetch_word_data(self) -> Optional[Dict]:
-        """current_word_id に基づき self.wN/self.wD を更新して返す"""
+        """current_word_id に基づき self.wN/self.wD を更新して返す。wTag/wCat も更新する"""
         if self.current_word_id is None:
             return None
         if self.use_stub:
@@ -94,6 +94,9 @@ class WordbookModel(BaseModel):
                 return None
             self.wN = item.get("name", "")
             self.wD = item.get("desc", "")
+            # stub に tag/category が無ければ None
+            self.wTag = item.get("tag") if "tag" in item else None
+            self.wCat = item.get("category") if "category" in item else None
             return item
         try:
             row = self.get_by_id(self.current_word_id)
@@ -101,6 +104,9 @@ class WordbookModel(BaseModel):
                 return None
             self.wN = row.get("name") or row.get("word_name") or ""
             self.wD = row.get("desc") or row.get("explain") or ""
+            # 新たに保持する
+            self.wTag = row.get("tag") or None
+            self.wCat = row.get("category") or None
             return row
         except Exception:
             logger.exception("fetch_word_data error")

@@ -230,3 +230,96 @@ class WordbookController:
 
     def handle_go_word_list(self):
         self.root_controller.switch_view("wordlist")
+
+    # --- 単語編集 ---
+    def save_edits(self, name: str, description: str, tag: str, category: str):
+        """
+        View から送られた編集内容を Model.update_term に保存する。
+        Model.update_term(question_id, word_name=..., explain=..., tag=..., category=...) -> bool
+        """
+        # current question_id を決定
+        qid = None
+        if getattr(self, "_current_detail", None):
+            qid = self._current_detail.get('id') or self._current_detail.get('question_id') or None
+        if not qid:
+            qid = getattr(self.model, "current_word_id", None)
+
+        # 正規化（Controller の方針: 空文字で明示的に上書き、Noneで変更しない）
+        name = (name or "").strip()
+        description = (description or "").strip()
+        tag = (tag or "").strip()
+        category = (category or "").strip()
+
+        # qid が不明なら name から解決を試みる
+        if not qid and name and hasattr(self.model, "get_term_detail"):
+            d = self.model.get_term_detail(name)
+            qid = d.get('id') if d else None
+
+        try:
+            if qid and hasattr(self.model, "update_term"):
+                # Model.update_term の引数名に合わせて呼ぶ
+                ok = self.model.update_term(
+                    qid,
+                    word_name=name or None,
+                    explain=description or None,
+                    tag=tag or None,
+                    category=category or None
+                )
+                if not ok:
+                    print("Warning: model.update_term returned False")
+            else:
+                print("Warning: No model.update_term or qid unknown; applying local reflect only")
+
+            # 永続化の後、DBから最新レコードを取得して内部状態と view を最新化
+            new_detail = None
+            if qid and hasattr(self.model, "get_by_id"):
+                new_detail = self.model.get_by_id(qid)
+            if not new_detail and name and hasattr(self.model, "get_term_detail"):
+                new_detail = self.model.get_term_detail(name)
+
+            if new_detail:
+                # model 側の保持（wN/wD/wTag/wCat/current_word_id）があれば更新しておく
+                try:
+                    if hasattr(self.model, "current_word_id"):
+                        self.model.current_word_id = new_detail.get('id') or self.model.current_word_id
+                    if hasattr(self.model, "wN"):
+                        self.model.wN = new_detail.get('name') or new_detail.get('word_name') or ""
+                    if hasattr(self.model, "wD"):
+                        self.model.wD = new_detail.get('desc') or new_detail.get('explain') or ""
+                    if hasattr(self.model, "wTag"):
+                        self.model.wTag = new_detail.get('tag') or new_detail.get('tags') or None
+                    if hasattr(self.model, "wCat"):
+                        self.model.wCat = new_detail.get('category') or new_detail.get('cat') or None
+                except Exception:
+                    pass
+                self._set_current_detail(new_detail)
+            else:
+                # DBから取れなければローカル反映
+                self._set_current_detail({'id': qid, 'name': name, 'desc': description, 'tag': tag or None, 'category': category or None})
+
+            # 編集モードを抜ける（View 側メソッド）
+            try:
+                self.view._exit_edit_widgets()
+            except Exception:
+                pass
+
+        except Exception as e:
+            print(f"Error saving edits: {e}")
+            
+    def cancel_edits(self):
+        """編集キャンセル: current_detail を再反映して編集UIを閉じる"""
+        try:
+            if getattr(self, "_current_detail", None):
+                self._set_current_detail(self._current_detail)
+            else:
+                qid = getattr(self.model, "current_word_id", None)
+                if qid and hasattr(self.model, "get_by_id"):
+                    d = self.model.get_by_id(qid)
+                    if d:
+                        self._set_current_detail(d)
+            try:
+                self.view._exit_edit_widgets()
+            except Exception:
+                pass
+        except Exception as e:
+            print(f"Error in cancel_edits: {e}")
