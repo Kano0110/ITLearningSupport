@@ -88,10 +88,8 @@ class WordbookView(tk.Frame):
         edit_action_frame = ttk.Frame(right_col)
         edit_action_frame.pack(fill='x', pady=(6,4))
         self.save_btn = ttk.Button(edit_action_frame, text="変更する", command=self._on_save_clicked)
-        self.cancel_btn = ttk.Button(edit_action_frame, text="キャンセル", command=self._on_cancel_clicked)
         # 最初は表示しない
         self.save_btn.pack_forget()
-        self.cancel_btn.pack_forget()
 
         # ナビゲーションボタン
         nav_frame = ttk.Frame(right_col)
@@ -147,11 +145,18 @@ class WordbookView(tk.Frame):
     # --- 編集モード制御 (View側UI操作) ---
     def _on_edit_clicked(self):
         if self.is_edit_mode:
+            # 編集中にもう一度押された → キャンセル扱い
+            self._exit_edit_widgets()
+            if hasattr(self.controller, "cancel_edits"):
+                try:
+                    self.controller.cancel_edits()
+                except Exception:
+                    pass
             return
+
+        # 編集モード開始
         self.is_edit_mode = True
-        # 編集ボタンを無効化またはラベル変更
-        self.edit_btn.config(text="編集中")
-        # 現在の表示値を編集ウィジェットに反映（already set in update_data）
+        self.edit_btn.config(text="キャンセル")  # 編集中は「キャンセル」と表示
         self._enter_edit_widgets()
 
     def _enter_edit_widgets(self):
@@ -181,7 +186,6 @@ class WordbookView(tk.Frame):
         self.edit_desc_text.insert("1.0", self.desc_text.get("1.0", "end").rstrip("\n"))
         # show Save/Cancel
         self.save_btn.pack(side=tk.RIGHT, padx=6)
-        self.cancel_btn.pack(side=tk.RIGHT, padx=6)
 
     def _exit_edit_widgets(self):
         """編集ウィジェットを閉じて通常表示に戻す"""
@@ -203,7 +207,6 @@ class WordbookView(tk.Frame):
         self.desc_text.pack(fill='both', expand=True, pady=(8,8))
         # hide Save/Cancel
         self.save_btn.pack_forget()
-        self.cancel_btn.pack_forget()
         # restore edit button label
         self.edit_btn.config(text="編集")
         self.is_edit_mode = False
@@ -216,16 +219,6 @@ class WordbookView(tk.Frame):
         desc = self.edit_desc_text.get("1.0", "end").rstrip("\n")
         # delegate save to controller (controller は成功時に view を更新してくれる想定)
         self.controller.save_edits(name=name, description=desc, tag=tag, category=category)
-
-    def _on_cancel_clicked(self):
-        """キャンセル: 編集内容を破棄して表示に戻す"""
-        self._exit_edit_widgets()
-        # controller にキャンセル通知（必要なら controller が再読み込み）
-        if hasattr(self.controller, "cancel_edits"):
-            try:
-                self.controller.cancel_edits()
-            except Exception:
-                pass
 
     # --- toggle display (used by controller) ---
     def toggle_name_display(self, is_visible, name):
