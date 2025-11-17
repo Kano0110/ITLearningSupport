@@ -104,6 +104,33 @@ class WordListModel(BaseModel):
     def get_categories(self) -> List[str]:
         return list(YOMI_MAP.keys())
 
+    def get_all_tags(self) -> List[str]:
+        """データベースから全タグを取得"""
+        try:
+            with self.get_conn() as conn:
+                cur = conn.execute("SELECT DISTINCT tag FROM terms WHERE tag IS NOT NULL ORDER BY tag;")
+                rows = cur.fetchall()
+                tags = [row['tag'] for row in rows if row['tag']]
+                return tags
+        except Exception:
+            logger.exception("タグ一覧取得エラー")
+            return []
+
+    def get_terms_by_tag(self, tag: str) -> List[str]:
+        """指定されたタグで用語をフィルタリング"""
+        if not tag:
+            return []
+        try:
+            with self.get_conn() as conn:
+                cur = conn.execute(
+                    "SELECT DISTINCT word_name FROM terms WHERE tag = ? AND word_name IS NOT NULL ORDER BY word_name;",
+                    (tag,)
+                )
+                return [row['word_name'] for row in cur.fetchall()]
+        except Exception:
+            logger.exception("タグ別取得エラー")
+            return []
+
     def is_db_available(self) -> bool:
         return self.db_path is not None
 
