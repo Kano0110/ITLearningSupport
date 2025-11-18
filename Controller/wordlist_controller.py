@@ -7,6 +7,7 @@ class WordListController:
         self.app = root_controller
         self.model = model if model is not None else WordListModel()
         self.current_category: Optional[str] = None
+        self.current_tag: Optional[str] = None
         self.current_search_query: str = ""
         self.use_yomi_filter: bool = True
         self.view_update_callback: Optional[Callable] = None
@@ -96,6 +97,27 @@ class WordListController:
     def get_available_categories(self):
         return self.model.get_categories()
 
+    def get_available_tags(self):
+        """利用可能なタグ一覧を取得"""
+        return self.model.get_all_tags()
+
+    def select_tag(self, tag: str):
+        """タグを選択して用語をフィルタリング"""
+        self.current_tag = tag
+        self.current_category = None
+        self.current_search_query = ""
+        terms = self.model.get_terms_by_tag(tag)
+        if not terms:
+            message = f"タグ '{tag}' の用語はありません"
+            self._notify_view([], message)
+        else:
+            self._notify_view(terms)
+
+    def clear_tag(self):
+        """タグフィルタをクリア"""
+        self.current_tag = None
+        self.apply_search(self.current_search_query)
+
     def get_stats(self):
         return self.model.get_stats()
 
@@ -140,6 +162,20 @@ class WordListController:
     def hide(self):
         if hasattr(self.view, "hide"):
             self.view.hide()
+
+    def go_to_home(self):
+        """Home画面への遷移"""
+        try:
+            self.app.switch_view("home")
+        except Exception as e:
+            print(f"Error: Failed to switch to home: {e}")
+
+    def go_to_wordentry(self):
+        """WordEntry画面への遷移"""
+        try:
+            self.app.switch_view("wordentry")
+        except Exception as e:
+            print(f"Error: Failed to switch to wordentry: {e}")
 
     def on_term_selected(self, word_name: str):
         """用語が選択されたときの処理。
