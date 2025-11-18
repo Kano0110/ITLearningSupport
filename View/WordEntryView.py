@@ -11,7 +11,7 @@ class WordEntryView:
         # ここでは frame を持たせて pack/forget をコントローラから呼べるようにする
         self.frame = ttk.Frame(self.root)
         self.entry_Name = tk.Text(self.frame, width=40, height=1)
-        self.entry_Furigana = tk.Text(self.frame, width=40,height=1)
+        self.entry_Yomi = tk.Text(self.frame, width=40,height=1)
         self.entry_Kai = tk.Text(self.frame, width=40, height=10)
         self.cb_Category = ttk.Combobox(self.frame, values=[], width=17)
         self.cb_Bunya = ttk.Combobox(self.frame, values=[], width=17)
@@ -24,7 +24,7 @@ class WordEntryView:
         self.entry_Name.place(x=150, y=30)
 
         ttk.Label(self.frame, text='ふりがな：').place(x=59, y=60)
-        self.entry_Furigana.place(x=150, y=60)
+        self.entry_Yomi.place(x=150, y=60)
 
         ttk.Label(self.frame, text='解説：').place(x=65, y=120)
         self.entry_Kai.place(x=150, y=90)
@@ -47,8 +47,8 @@ class WordEntryView:
     def get_name(self):
         return self.entry_Name.get("1.0", tk.END).strip()
     
-    def get_furigana(self):
-        return self.entry_Furigana.get("1.0", tk.END).strip()
+    def get_yomi(self):
+        return self.entry_Yomi.get("1.0", tk.END).strip()
 
     def get_explain(self):
         return self.entry_Kai.get("1.0", tk.END).strip()

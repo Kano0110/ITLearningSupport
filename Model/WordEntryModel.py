@@ -36,7 +36,7 @@ class WordEntryModel(BaseModel):
             logger.exception("メーカー取得エラー")
             return self._stub_makers
 
-    def create_word(self, word_name: str, explain: str, furigana: Optional[str]=None, category: Optional[str]=None, maker: Optional[str]=None) -> Optional[int]:
+    def create_word(self, word_name: str, explain: str, yomi: Optional[str]=None, category: Optional[str]=None, maker: Optional[str]=None) -> Optional[int]:
         if not word_name or not explain:
             raise ValueError("word_name and explain required")
         if self.use_stub:
@@ -45,8 +45,8 @@ class WordEntryModel(BaseModel):
         try:
             with self.get_conn() as conn:
                 cur = conn.execute(
-                    "INSERT INTO terms (word_name, furigana, explain, category, maker) VALUES (?, ?, ?, ?, ?);",
-                    (word_name, furigana, explain, category, maker)
+                    "INSERT INTO terms (word_name, yomi, explain, category, maker) VALUES (?, ?, ?, ?, ?);",
+                    (word_name, yomi, explain, category, maker)
                 )
                 return cur.lastrowid
         except Exception:
