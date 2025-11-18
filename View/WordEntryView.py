@@ -21,13 +21,17 @@ class WordEntryView:
         self.root.title("単語登録")
         ttk.Label(self.frame, text='単語名：').place(x=60, y=30)
         self.entry_Name.place(x=150, y=30)
+
+        ttk.Label(self.frame, text='ふりがな：').place(x=59, y=60)
+        self.entry_Furigana.place(x=150, y=60)
+
         ttk.Label(self.frame, text='解説：').place(x=65, y=120)
-        self.entry_Kai.place(x=150, y=60)
-        ttk.Label(self.frame, text='カテゴリ').place(x=70, y=220)
-        self.cb_Category.place(x=120, y=220)
-        ttk.Label(self.frame, text='分野').place(x=300, y=220)
-        self.cb_Bunya.place(x=350, y=220)
-        ttk.Button(self.frame, text='戻る', command=lambda: self.controller.create_close_window()).place(x=40, y=340)
+        self.entry_Kai.place(x=150, y=90)
+        ttk.Label(self.frame, text='カテゴリ').place(x=70, y=260)
+        self.cb_Category.place(x=120, y=260)
+        ttk.Label(self.frame, text='分野').place(x=300, y=260)
+        self.cb_Bunya.place(x=350, y=260)
+        ttk.Button(self.frame, text='単語一覧に戻る', command=lambda: self.controller.create_close_window()).place(x=40, y=340)
         ttk.Button(self.frame, text='リセット', command=lambda: self.controller.create_reset_window()).place(x=250, y=340)
         ttk.Button(self.frame, text='作成', command=lambda: self.controller.get_id_pass()).place(x=490, y=340)
 
