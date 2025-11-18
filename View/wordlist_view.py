@@ -58,7 +58,7 @@ class WordListView:
         all_btn.pack(side='left', padx=2)
 
     def _create_tag_selector(self):
-        """タグで絞り込むUIを作成"""
+        """カテゴリで絞り込むUIを作成"""
         tag_frame = ttk.Frame(self.frame, padding=(8, 4))
         tag_frame.pack(fill='x')
         
@@ -66,7 +66,7 @@ class WordListView:
         center_tag = ttk.Frame(tag_frame)
         center_tag.pack(expand=True)
         
-        ttk.Label(center_tag, text="タグ:").pack(side='left', padx=5)
+        ttk.Label(center_tag, text="カテゴリ:").pack(side='left', padx=5)
         
         tags = self.controller.get_available_tags()
         if tags:
@@ -75,7 +75,7 @@ class WordListView:
             tag_combo.pack(side='left', padx=(4, 4))
             tag_combo.bind('<<ComboboxSelected>>', self.on_tag_selected)
             
-            tag_clear_btn = ttk.Button(center_tag, text="タグクリア", command=self.on_tag_clear_click)
+            tag_clear_btn = ttk.Button(center_tag, text="クリア", command=self.on_tag_clear_click)
             tag_clear_btn.pack(side='left', padx=5)
         else:
             ttk.Label(center_tag, text="利用可能なタグはありません", foreground='gray').pack(side='left')
@@ -181,7 +181,12 @@ class WordListView:
         else:
             if message is None:
                 message = "用語が見つかりません"
-            ttk.Label(self.scrollable_frame, text=message, foreground='gray').grid(row=0, column=0, sticky='w')
+            # 3列にまたがらせて中央配置
+            msg_label = ttk.Label(self.scrollable_frame, text=message, foreground='gray')
+            msg_label.grid(row=0, column=0, columnspan=3, sticky='ew', padx=5, pady=20)
+            # 各列を均等に広げる
+            for col in range(3):
+                self.scrollable_frame.columnconfigure(col, weight=1)
 
         try:
             self.canvas.update_idletasks()
