@@ -66,7 +66,7 @@ class WordEntryView:
     def clear_inputs(self):
         """入力欄をクリアする（リセット処理）。"""
         self.entry_Name.delete("1.0", tk.END)
-        self.entry_Furigana.delete("1.0", tk.END)
+        self.entry_Yomi.delete("1.0", tk.END)
         self.entry_Kai.delete("1.0", tk.END)
         self.cb_Category.set("")
         self.cb_Tag.set("")
