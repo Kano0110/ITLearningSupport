@@ -1,0 +1,6 @@
+word_master.db
+View/__pycache__/
+Model/__pycache__/
+Controller/__pycache__/
+*.pyc
+*.db-journal
