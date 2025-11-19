@@ -13,20 +13,19 @@ class HomeController:
 
 # HomeController.py の該当メソッド
     def go_to_wordentry(self):
-        """「単語帳を作る」ボタンが押された時の処理"""
-        print("Controller: 単語帳作成画面へ遷移を要求")
+        """「問題を解く」ボタンが押された時の処理"""
+        print("Controller: 問題選択画面へ遷移を要求")
         self.root_controller.switch_view("wordentry")
 
     def go_to_wordlist(self):
         """「単語帳を見る」ボタンが押された時の処理 -> WordListへ遷移"""
         print("Controller: 単語一覧画面 (WordList) へ遷移を要求")
-        # メインコントローラーを通じてWordList画面への切り替えを指示
         self.root_controller.switch_view("wordlist")
 
-    #def go_to_quiz(self):
-    #    """「問題を解く」ボタンが押された時の処理"""
-    #    print("Controller: クイズ画面へ遷移を要求")
-    #    self.root_controller.switch_view("quiz")
+    def go_to_quiz(self):
+        """「問題を解く」ボタンが押された時の処理"""
+        print("Controller: クイズ選択画面へ遷移を要求")
+        self.root_controller.switch_view("qselect")
        
     def show(self):
         """この画面を表示状態にする"""
