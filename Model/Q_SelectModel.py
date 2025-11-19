@@ -1,4 +1,4 @@
-# Model/wordlist_model.py
+# Model/Q_SelectModel.py
 import logging
 from typing import List, Dict, Optional
 from .BaseModel import BaseModel
@@ -20,29 +20,26 @@ YOMI_MAP = {
     'わ': ('わ', 'を', 'ん'),
 }
 
-class WordListModel(BaseModel):
-    """IT用語辞書のデータモデル（BaseModel の get_conn を利用）"""
+class Q_SelectModel(BaseModel):
+    """問題選択画面のデータモデル"""
 
     def __init__(self, db_path: Optional[str] = None):
         super().__init__(db_path=db_path)
-        self._cache_all_terms: Optional[List[str]] = None
 
-    def get_all_terms(self, force_refresh: bool = False) -> List[str]:
-        if self._cache_all_terms is not None and not force_refresh:
-            return self._cache_all_terms
-
+    def get_all_terms(self) -> List[str]:
+        """全ての用語を取得"""
         try:
             with self.get_conn() as conn:
                 cur = conn.execute("SELECT DISTINCT word_name FROM terms WHERE word_name IS NOT NULL ORDER BY word_name;")
                 rows = cur.fetchall()
                 terms = [row['word_name'] for row in rows]
-                self._cache_all_terms = terms
                 return terms
-        except Exception as e:
+        except Exception:
             logger.exception("全件取得エラー")
             return []
 
     def get_terms_by_category(self, category: str) -> List[str]:
+        """カテゴリで用語をフィルタリング"""
         if category not in YOMI_MAP:
             return []
         try:
@@ -57,6 +54,7 @@ class WordListModel(BaseModel):
             return []
 
     def get_terms_by_yomi(self, category: str) -> List[str]:
+        """読み仮名で用語をフィルタリング"""
         if category not in YOMI_MAP:
             return []
         try:
@@ -75,33 +73,23 @@ class WordListModel(BaseModel):
             logger.exception("読み仮名別取得エラー")
             return []
 
-    def get_term_detail(self, word_name: str) -> Optional[Dict]:
+    def get_terms_by_tag(self, tag: str) -> List[str]:
+        """タグで用語をフィルタリング"""
+        if not tag:
+            return []
         try:
             with self.get_conn() as conn:
-                cur = conn.execute("""
-                    SELECT question_id, word_cloud_id, word_name, explain, tag, category, yomi
-                    FROM terms
-                    WHERE word_name = ?
-                    LIMIT 1;
-                """, (word_name,))
-                row = cur.fetchone()
-                return dict(row) if row else None
+                cur = conn.execute(
+                    "SELECT DISTINCT word_name FROM terms WHERE tag = ? AND word_name IS NOT NULL ORDER BY word_name;",
+                    (tag,)
+                )
+                return [row['word_name'] for row in cur.fetchall()]
         except Exception:
-            logger.exception("詳細取得エラー")
-            return None
-
-    def search_terms(self, query: str) -> List[str]:
-        if not query:
-            return self.get_all_terms()
-        try:
-            query_lower = query.lower()
-            all_terms = self.get_all_terms()
-            return [term for term in all_terms if query_lower in term.lower()]
-        except Exception:
-            logger.exception("検索処理エラー")
+            logger.exception("タグ別取得エラー")
             return []
 
     def get_categories(self) -> List[str]:
+        """利用可能なカテゴリを取得"""
         return list(YOMI_MAP.keys())
 
     def get_all_tags(self) -> List[str]:
@@ -116,39 +104,6 @@ class WordListModel(BaseModel):
             logger.exception("タグ一覧取得エラー")
             return []
 
-    def get_terms_by_tag(self, tag: str) -> List[str]:
-        """指定されたタグで用語をフィルタリング"""
-        if not tag:
-            return []
-        try:
-            with self.get_conn() as conn:
-                cur = conn.execute(
-                    "SELECT DISTINCT word_name FROM terms WHERE tag = ? AND word_name IS NOT NULL ORDER BY word_name;",
-                    (tag,)
-                )
-                return [row['word_name'] for row in cur.fetchall()]
-        except Exception:
-            logger.exception("タグ別取得エラー")
-            return []
-
     def is_db_available(self) -> bool:
+        """データベースが利用可能か確認"""
         return self.db_path is not None
-
-    def get_stats(self) -> Dict[str, int]:
-        try:
-            with self.get_conn() as conn:
-                cur = conn.execute("SELECT COUNT(DISTINCT word_name) as cnt FROM terms WHERE word_name IS NOT NULL;")
-                row = cur.fetchone()
-                total = row['cnt'] if row and 'cnt' in row else (row[0] if row else 0)
-
-                cur = conn.execute("""
-                    SELECT category, COUNT(DISTINCT word_name) as count
-                    FROM terms
-                    WHERE word_name IS NOT NULL AND category IS NOT NULL
-                    GROUP BY category;
-                """)
-                category_counts = {row['category']: row['count'] for row in cur.fetchall()}
-                return {'total': total, 'by_category': category_counts}
-        except Exception:
-            logger.exception("統計取得エラー")
-            return {'total': 0}
