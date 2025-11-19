@@ -11,7 +11,7 @@ class WordEntryModel(BaseModel):
         super().__init__(db_path=db_path)
         self.use_stub = use_stub
         self._stub_categories = ["生物", "物理", "数学", "歴史"]
-        self._stub_makers = ["松下","日立","東芝","ソニー","シャープ","三井","三菱","住友","安田"]
+        self._stub_tags = ["松下","日立","東芝","ソニー","シャープ","三井","三菱","住友","安田"]
 
     def get_categories(self) -> List[str]:
         if self.use_stub:
@@ -24,19 +24,19 @@ class WordEntryModel(BaseModel):
             logger.exception("カテゴリ取得エラー")
             return self._stub_categories
 
-    def get_makers(self) -> List[str]:
+    def get_tag(self) -> List[str]:
         if self.use_stub:
-            return self._stub_makers
+            return self._stub_tags
         try:
             with self.get_conn() as conn:
-                cur = conn.execute("SELECT DISTINCT maker FROM terms WHERE maker IS NOT NULL ORDER BY maker;")
-                rows = [r["maker"] for r in cur.fetchall()]
-                return rows if rows else self._stub_makers
+                cur = conn.execute("SELECT DISTINCT tag FROM terms WHERE tag IS NOT NULL ORDER BY tag;")
+                rows = [r["tag"] for r in cur.fetchall()]
+                return rows if rows else self._stub_tags
         except Exception:
-            logger.exception("メーカー取得エラー")
-            return self._stub_makers
+            logger.exception("タグ取得エラー")
+            return self._stub_tags
 
-    def create_word(self, word_name: str, explain: str, yomi: Optional[str]=None, category: Optional[str]=None, maker: Optional[str]=None) -> Optional[int]:
+    def create_word(self, word_name: str, explain: str, yomi: Optional[str]=None, category: Optional[str]=None, tag: Optional[str]=None) -> Optional[int]:
         if not word_name or not explain:
             raise ValueError("word_name and explain required")
         if self.use_stub:
@@ -45,8 +45,8 @@ class WordEntryModel(BaseModel):
         try:
             with self.get_conn() as conn:
                 cur = conn.execute(
-                    "INSERT INTO terms (word_name, yomi, explain, category, maker) VALUES (?, ?, ?, ?, ?);",
-                    (word_name, yomi, explain, category, maker)
+                    "INSERT INTO terms (word_name, yomi, explain, category, tag) VALUES (?, ?, ?, ?, ?);",
+                    (word_name, yomi, explain, category, tag)
                 )
                 return cur.lastrowid
         except Exception:

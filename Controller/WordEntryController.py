@@ -31,7 +31,7 @@ class WordEntryController:
         name = self.view.get_name()
         explain = self.view.get_explain()
         try:
-            new_id = self.model.create_word(name, explain, category=self.view.get_category(), maker=self.view.get_maker())
+            new_id = self.model.create_word(name, explain, category=self.view.get_category(), tag=self.view.get_tag())
         except ValueError as e:
             self.view.show_error(str(e))
             return

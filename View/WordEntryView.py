@@ -14,9 +14,9 @@ class WordEntryView:
         self.entry_Yomi = tk.Text(self.frame, width=40,height=1)
         self.entry_Kai = tk.Text(self.frame, width=40, height=10)
         self.cb_Category = ttk.Combobox(self.frame, values=[], width=17)
-        self.cb_Bunya = ttk.Combobox(self.frame, values=[], width=17)
+        self.cb_Tag = ttk.Combobox(self.frame, values=[], width=17)
         self._build_ui()
-
+#cd_Bunya
 
     def _build_ui(self):
         self.root.title("単語登録")
@@ -30,8 +30,8 @@ class WordEntryView:
         self.entry_Kai.place(x=150, y=90)
         ttk.Label(self.frame, text='カテゴリ').place(x=70, y=260)
         self.cb_Category.place(x=120, y=260)
-        ttk.Label(self.frame, text='分野').place(x=300, y=260)
-        self.cb_Bunya.place(x=350, y=260)
+        ttk.Label(self.frame, text='タグ').place(x=300, y=260)
+        self.cb_Tag.place(x=350, y=260)
         ttk.Button(self.frame, text='単語一覧に戻る', command=lambda: self.controller.create_close_window()).place(x=40, y=340)
         ttk.Button(self.frame, text='リセット', command=lambda: self.controller.create_reset_window()).place(x=250, y=340)
         ttk.Button(self.frame, text='作成', command=lambda: self.controller.get_id_pass()).place(x=490, y=340)
@@ -56,8 +56,8 @@ class WordEntryView:
     def get_category(self):
         return self.cb_Category.get()
 
-    def get_maker(self):
-        return self.cb_Bunya.get()
+    def get_tag(self):
+        return self.cb_Tag.get()
 
     def clear_inputs(self):
         """入力欄をクリアする（リセット処理）。"""
@@ -65,7 +65,7 @@ class WordEntryView:
         self.entry_Furigana.delete("1.0", tk.END)
         self.entry_Kai.delete("1.0", tk.END)
         self.cb_Category.set("")
-        self.cb_Bunya.set("")
+        self.cb_Tag.set("")
 
     def show_error(self, msg: str):
         messagebox.showerror("エラー", msg)
