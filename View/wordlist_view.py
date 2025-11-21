@@ -22,7 +22,7 @@ class WordListView:
     def _build_ui(self):
         self._create_navigation_buttons()
         self._create_index_buttons()
-        self._create_tag_selector()
+        self._create_filter_selectors()
         self._create_search_bar()
         self._create_list_area()
 
@@ -50,15 +50,59 @@ class WordListView:
         center_index = ttk.Frame(index_frame)
         center_index.pack(expand=True)
         
-        categories = self.controller.get_available_categories()
-        for category in categories:
-            btn = ttk.Button(center_index, text=category, width=3, command=lambda c=category: self.on_category_click(c))
+        # 五十音インデックス（yomi）を使う
+        yomi_keys = []
+        try:
+            yomi_keys = self.controller.get_yomi_index()
+        except Exception:
+            yomi_keys = self.controller.get_available_categories()
+        for key in yomi_keys:
+            btn = ttk.Button(center_index, text=key, width=3, command=lambda k=key: self.on_yomi_click(k))
             btn.pack(side='left', padx=2)
         all_btn = ttk.Button(center_index, text="全て", width=4, command=self.on_show_all_click)
         all_btn.pack(side='left', padx=2)
 
+    def _create_filter_selectors(self):
+        """タグとカテゴリを1つの行に横並びで配置"""
+        filter_frame = ttk.Frame(self.frame, padding=(8, 3))
+        filter_frame.pack(fill='x')
+        
+        center_filter = ttk.Frame(filter_frame)
+        center_filter.pack(expand=True)
+        
+        # タグセレクタ
+        ttk.Label(center_filter, text="タグ:").pack(side='left', padx=(5, 2))
+        tags = self.controller.get_available_tags()
+        if tags:
+            self.tag_var = tk.StringVar()
+            tag_combo = ttk.Combobox(center_filter, textvariable=self.tag_var, values=tags, state='readonly', width=12)
+            tag_combo.pack(side='left', padx=(0, 2))
+            tag_combo.bind('<<ComboboxSelected>>', self.on_tag_selected)
+            tag_clear_btn = ttk.Button(center_filter, text="×", width=2, command=self.on_tag_clear_click)
+            tag_clear_btn.pack(side='left', padx=(0, 10))
+        else:
+            ttk.Label(center_filter, text="(なし)", foreground='gray').pack(side='left', padx=(0, 10))
+        
+        # カテゴリセレクタ
+        ttk.Label(center_filter, text="カテゴリ:").pack(side='left', padx=(5, 2))
+        categories = self.controller.get_available_categories()
+        if categories:
+            self.category_var = tk.StringVar()
+            category_combo = ttk.Combobox(center_filter, textvariable=self.category_var, values=categories, state='readonly', width=12)
+            category_combo.pack(side='left', padx=(0, 2))
+            category_combo.bind('<<ComboboxSelected>>', self.on_category_selected)
+            category_clear_btn = ttk.Button(center_filter, text="×", width=2, command=self.on_category_clear_click)
+            category_clear_btn.pack(side='left', padx=(0, 5))
+        else:
+            ttk.Label(center_filter, text="(なし)", foreground='gray').pack(side='left', padx=(0, 5))
+
     def _create_tag_selector(self):
-        """カテゴリで絞り込むUIを作成"""
+        """タグで絞り込むUIを作成（非推奨：_create_filter_selectors に統合）"""
+        pass
+
+    def _create_category_selector(self):
+        """カテゴリで絞り込むUIを作成（非推奨：_create_filter_selectors に統合）"""
+        """タグで絞り込むUIを作成"""
         tag_frame = ttk.Frame(self.frame, padding=(8, 4))
         tag_frame.pack(fill='x')
         
@@ -66,7 +110,7 @@ class WordListView:
         center_tag = ttk.Frame(tag_frame)
         center_tag.pack(expand=True)
         
-        ttk.Label(center_tag, text="カテゴリ:").pack(side='left', padx=5)
+        ttk.Label(center_tag, text="タグ:").pack(side='left', padx=5)
         
         tags = self.controller.get_available_tags()
         if tags:
@@ -79,6 +123,29 @@ class WordListView:
             tag_clear_btn.pack(side='left', padx=5)
         else:
             ttk.Label(center_tag, text="利用可能なタグはありません", foreground='gray').pack(side='left')
+
+    def _create_category_selector(self):
+        """カテゴリで絞り込むUIを作成"""
+        category_frame = ttk.Frame(self.frame, padding=(8, 4))
+        category_frame.pack(fill='x')
+        
+        # 中央に配置するための内側フレーム
+        center_category = ttk.Frame(category_frame)
+        center_category.pack(expand=True)
+        
+        ttk.Label(center_category, text="カテゴリ:").pack(side='left', padx=5)
+        
+        categories = self.controller.get_available_categories()
+        if categories:
+            self.category_var = tk.StringVar()
+            category_combo = ttk.Combobox(center_category, textvariable=self.category_var, values=categories, state='readonly', width=20)
+            category_combo.pack(side='left', padx=(4, 4))
+            category_combo.bind('<<ComboboxSelected>>', self.on_category_selected)
+            
+            category_clear_btn = ttk.Button(center_category, text="クリア", command=self.on_category_clear_click)
+            category_clear_btn.pack(side='left', padx=5)
+        else:
+            ttk.Label(center_category, text="利用可能なカテゴリはありません", foreground='gray').pack(side='left')
 
     def _create_search_bar(self):
         search_frame = ttk.Frame(self.frame, padding=(8, 4))
@@ -196,7 +263,19 @@ class WordListView:
             pass
 
     def on_category_click(self, category: str):
-        self.controller.select_category(category)
+        # 互換: index ボタン経由で呼ばれた場合は yomi フィルタとして扱う
+        if hasattr(self.controller, 'select_yomi'):
+            self.controller.select_yomi(category)
+        else:
+            self.controller.select_category_db(category)
+
+    def on_yomi_click(self, yomi_key: str):
+        """五十音インデックスをクリックしたときの処理"""
+        if hasattr(self.controller, 'select_yomi'):
+            self.controller.select_yomi(yomi_key)
+        else:
+            # フォールバック
+            self.controller.select_category(yomi_key)
 
     def on_show_all_click(self):
         self.controller.clear_category()
@@ -219,6 +298,20 @@ class WordListView:
         """タグフィルタをクリア"""
         self.tag_var.set("")
         self.controller.clear_tag()
+
+    def on_category_selected(self, event):
+        """カテゴリが選択された時の処理"""
+        category = self.category_var.get()
+        if category:
+            # コンボは DB の category を使うため、DB 用メソッドを呼ぶ
+            if hasattr(self.controller, 'select_category_db'):
+                self.controller.select_category_db(category)
+            else:
+                self.controller.select_category(category)
+    def on_category_clear_click(self):
+        """カテゴリフィルタをクリア"""
+        self.category_var.set("")
+        self.controller.clear_category()
 
     def on_go_home_click(self):
         """Home画面への遷移"""
