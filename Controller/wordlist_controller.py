@@ -49,6 +49,36 @@ class WordListController:
         else:
             if hasattr(self.view, "update_list"):
                 self.view.update_list(terms, message)
+        # フィルタステータスラベルを更新
+        self._update_filter_status_label()
+
+    def _update_filter_status_label(self):
+        """現在のフィルタ状態をステータスラベルに表示"""
+        self._ensure_view()
+        if not hasattr(self.view, "filter_status_label"):
+            return
+        
+        status_text = ""
+        if self.current_tag:
+            status_text += f"タグ: {self.current_tag}"
+        if self.current_db_category:
+            if status_text:
+                status_text += " | "
+            status_text += f"カテゴリ: {self.current_db_category}"
+        if self.current_yomi_key:
+            if status_text:
+                status_text += " | "
+            status_text += f"50音: {self.current_yomi_key}"
+        if self.current_search_query:
+            if status_text:
+                status_text += " | "
+            status_text += f"検索: {self.current_search_query}"
+        
+        # ステータステキストが無い場合は「すべて表示」と表示
+        if not status_text:
+            status_text = "すべて表示"
+        
+        self.view.filter_status_label.config(text=status_text)
 
     def initialize(self):
         if not self.model.is_db_available():
@@ -121,6 +151,9 @@ class WordListController:
     def select_tag(self, tag: str):
         """タグを選択して用語をフィルタリング"""
         self.current_tag = tag
+        # タグ選択時に他のフィルタをクリア
+        self.current_db_category = None
+        self.current_yomi_key = None
         self.current_search_query = ""
         if not tag:
             # 空タグは無効とみなす
@@ -148,9 +181,10 @@ class WordListController:
 
     def select_category_db(self, category: str):
         """DB の category 列によるフィルタリング"""
-        # DBカテゴリをセットし、yomiキーは解除
+        # DBカテゴリをセットし、他のフィルタをクリア
         self.current_db_category = category
         self.current_yomi_key = None
+        self.current_tag = None
         self.current_search_query = ""
         terms = self.model.get_terms_by_category(category)
         if not terms:
@@ -160,29 +194,29 @@ class WordListController:
             self._notify_view(terms)
 
     def select_yomi(self, yomi_key: str):
-        """五十音（yomi列）によるフィルタリング"""
-        # yomiキーをセットし、DBカテゴリは解除
+        """50音キーによるフィルタリング"""
+        # yomiキーをセットし、他のフィルタをクリア
         self.current_yomi_key = yomi_key
         self.current_db_category = None
+        self.current_tag = None
         self.current_search_query = ""
         terms = self.model.get_terms_by_yomi(yomi_key)
         if not terms:
-            message = f"{yomi_key}行の用語はありません"
+            message = f"50音 '{yomi_key}' に該当する用語はありません"
             self._notify_view([], message)
         else:
             self._notify_view(terms)
 
     def clear_category(self):
-        """カテゴリフィルタをクリア"""
-        # どちらのカテゴリフィルタも解除
+        """全てのフィルタを完全にクリア（全て表示に戻す）"""
+        # 全てのフィルタをリセット
         self.current_db_category = None
         self.current_yomi_key = None
-        # もしタグフィルタが残っていればタグ結果を表示、そうでなければ検索/全件を表示
-        if self.current_tag:
-            # 再適用
-            self.select_tag(self.current_tag)
-        else:
-            self.apply_search(self.current_search_query)
+        self.current_tag = None
+        self.current_search_query = ""
+        # 全件を表示
+        all_terms = self.model.get_all_terms()
+        self._notify_view(all_terms)
 
     def get_stats(self):
         return self.model.get_stats()
