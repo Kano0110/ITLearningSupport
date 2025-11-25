@@ -150,6 +150,26 @@ class Q_SelectController:
         except Exception as e:
             print(f"Error: Failed to start random quiz: {e}")
 
+    def start_quiz_hide_words(self):
+        """単語を隠して出題を開始（解説のみを表示）"""
+        if not self.selected_terms:
+            print("Error: No terms selected")
+            return
+        try:
+            self.app.start_quiz(self.selected_terms, mode='hide_words')
+        except Exception as e:
+            print(f"Error: Failed to start hide_words quiz: {e}")
+
+    def start_quiz_hide_explanations(self):
+        """解説を隠して出題を開始（単語のみを表示）"""
+        if not self.selected_terms:
+            print("Error: No terms selected")
+            return
+        try:
+            self.app.start_quiz(self.selected_terms, mode='hide_explanations')
+        except Exception as e:
+            print(f"Error: Failed to start hide_explanations quiz: {e}")
+
     def go_to_home(self):
         """Home画面への遷移"""
         try:

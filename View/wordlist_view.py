@@ -96,6 +96,14 @@ class WordListView:
         else:
             ttk.Label(center_filter, text="(なし)", foreground='gray').pack(side='left', padx=(0, 5))
 
+        # フィルタ状態表示
+        status_frame = ttk.Frame(self.frame, padding=(8, 2))
+        status_frame.pack(fill='x')
+        
+        ttk.Label(status_frame, text="絞り込み状況:").pack(side='left', padx=5)
+        self.filter_status_label = ttk.Label(status_frame, text="", foreground='blue', font=('Arial', 9))
+        self.filter_status_label.pack(side='left', padx=5)
+
     def _create_tag_selector(self):
         """タグで絞り込むUIを作成（非推奨：_create_filter_selectors に統合）"""
         pass
