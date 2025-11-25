@@ -79,7 +79,7 @@ class WordListModel(BaseModel):
         try:
             with self.get_conn() as conn:
                 cur = conn.execute("""
-                    SELECT question_id, word_cloud_id, word_name, explain, tag, category, yomi
+                    SELECT id, word_name, explain, tag, category, yomi
                     FROM terms
                     WHERE word_name = ?
                     LIMIT 1;

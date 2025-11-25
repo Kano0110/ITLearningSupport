@@ -111,23 +111,23 @@ class Q_SelectView:
         inner_buttons_frame = ttk.Frame(buttons_frame)
         inner_buttons_frame.pack(expand=True)
 
-        # 「重要な順に出題」ボタン
-        important_btn = ttk.Button(
+        # 「単語を隠す」ボタン
+        hide_words_btn = ttk.Button(
             inner_buttons_frame,
-            text="重要な順に出題",
-            command=self._on_important_btn_click,
+            text="単語を隠す",
+            command=self._on_hide_words_click,
             width=20
         )
-        important_btn.pack(side='left', padx=20, pady=20)
+        hide_words_btn.pack(side='left', padx=20, pady=20)
 
-        # 「ランダムに出題」ボタン
-        random_btn = ttk.Button(
+        # 「解説を隠す」ボタン
+        hide_explanations_btn = ttk.Button(
             inner_buttons_frame,
-            text="ランダムに出題",
-            command=self._on_random_btn_click,
+            text="解説を隠す",
+            command=self._on_hide_explanations_click,
             width=20
         )
-        random_btn.pack(side='left', padx=20, pady=20)
+        hide_explanations_btn.pack(side='left', padx=20, pady=20)
 
     def _create_back_button(self):
         """戻るボタンを作成"""
@@ -173,21 +173,21 @@ class Q_SelectView:
         summary = self.controller.get_selection_summary()
         self.summary_label.config(text=summary)
 
-    def _on_important_btn_click(self):
-        """「重要な順に出題」ボタンがクリックされた"""
+    def _on_hide_words_click(self):
+        """「単語を隠す」ボタンがクリックされた"""
         terms = self.controller.get_selected_terms()
         if not terms:
             messagebox.showwarning("警告", "用語が選択されていません")
             return
-        self.controller.start_quiz_important_order()
+        self.controller.start_quiz_hide_words()
 
-    def _on_random_btn_click(self):
-        """「ランダムに出題」ボタンがクリックされた"""
+    def _on_hide_explanations_click(self):
+        """「解説を隠す」ボタンがクリックされた"""
         terms = self.controller.get_selected_terms()
         if not terms:
             messagebox.showwarning("警告", "用語が選択されていません")
             return
-        self.controller.start_quiz_random()
+        self.controller.start_quiz_hide_explanations()
 
     def _on_back_btn_click(self):
         """戻るボタンがクリックされた"""
