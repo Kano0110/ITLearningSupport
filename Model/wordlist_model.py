@@ -79,7 +79,7 @@ class WordListModel(BaseModel):
         try:
             with self.get_conn() as conn:
                 cur = conn.execute("""
-                    SELECT question_id, word_cloud_id, word_name, explain, tag, category, yomi
+                    SELECT id, word_name, explain, tag, category, yomi
                     FROM terms
                     WHERE word_name = ?
                     LIMIT 1;
@@ -102,6 +102,11 @@ class WordListModel(BaseModel):
             return []
 
     def get_categories(self) -> List[str]:
+        # DB の category 列からカテゴリ一覧を取得するように変更
+        return self.get_all_categorys()
+
+    def get_yomi_keys(self) -> List[str]:
+        """五十音インデックス（YOMI_MAP のキー）を返す"""
         return list(YOMI_MAP.keys())
 
     def get_all_tags(self) -> List[str]:
@@ -131,6 +136,34 @@ class WordListModel(BaseModel):
             logger.exception("タグ別取得エラー")
             return []
 
+    
+    def get_all_categorys(self) -> List[str]:
+        """データベースから全カテゴリを取得"""
+        try:
+            with self.get_conn() as conn:
+                cur = conn.execute("SELECT DISTINCT category FROM terms WHERE category IS NOT NULL ORDER BY category;")
+                rows = cur.fetchall()
+                categorys = [row['category'] for row in rows if row['category']]
+                return categorys
+        except Exception:
+            logger.exception("タグ一覧取得エラー")
+            return []
+
+    def get_terms_by_category(self, category: str) -> List[str]:
+        """指定されたタグで用語をフィルタリング"""
+        if not category:
+            return []
+        try:
+            with self.get_conn() as conn:
+                cur = conn.execute(
+                    "SELECT DISTINCT word_name FROM terms WHERE category = ? AND word_name IS NOT NULL ORDER BY word_name;",
+                    (category,)
+                )
+                return [row['word_name'] for row in cur.fetchall()]
+        except Exception:
+            logger.exception("タグ別取得エラー")
+            return []
+        
     def is_db_available(self) -> bool:
         return self.db_path is not None
 
