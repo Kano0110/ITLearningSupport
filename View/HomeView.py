@@ -17,19 +17,12 @@ class HomeView(tk.Frame):
         label = ttk.Label(self, text="HOME", font=('Arial', 24))
         label.pack(padx=20, pady=40)
 
-        # 単語帳を作るボタン (遷移1)
-        # wordentryへ遷移
-        create_button = ttk.Button(self, text="単語帳を作る", 
-                                   command=self.controller.go_to_wordentry)
-        create_button.pack(pady=10, ipadx=20)
+        # 単語一覧ボタン（上から1番目）
+        wordlist_button = ttk.Button(self, text="単語一覧",
+                                command=self.controller.go_to_wordlist)
+        wordlist_button.pack(pady=10, ipadx=20)
 
-        # 単語帳を見るボタン (遷移2)
-        # wordlistへ遷移
-        view_button = ttk.Button(self, text="単語帳を見る", 
-                                 command=self.controller.go_to_wordlist)
-        view_button.pack(pady=10, ipadx=20)
-
-        # 問題を解くボタン (遷移3)
-       # solve_button = ttk.Button(self, text="問題を解く", 
-       #                          command=self.controller.go_to_quiz)
-       # solve_button.pack(pady=10, ipadx=20)
+        # 問題を解くボタン（上から2番目）
+        quiz_button = ttk.Button(self, text="問題を解く",
+                                command=self.controller.go_to_quiz)
+        quiz_button.pack(pady=10, ipadx=20)
