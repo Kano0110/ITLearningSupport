@@ -15,25 +15,25 @@ class ResultView:
 
         ZanteiCategory = "ネットワーク"
         ZanteiTag = "絞り込みなし"
-        ZanteiMondaisuu = 10
+        total_questions = 10
         ZanteiSeikai = 8
         ZanteiPercent = 1500
         ZanteiWrong = ["DNS","HTTP/HTTPS"]
-        
+
         self._build_ui()
 #cd_Bunya
 
     def _build_ui(self):
-        self.root.title("")
+        self.root.title("結果発表")
 
         """正解数と正解率"""
-        QuestCount = string_num = str(self.ZanteiMondaisuu)
-        CorrectCount = string_num = str(self.ZanteiSeikai)
+        QuestCount = self.string_num = str(self.total_questions)
+        CorrectCount = self.string_num = str(self.ZanteiSeikai)
 
 
-        ZanteiPercent = (self.ZanteiSeikai / self.ZanteiMondaisuu) * 100
+        ZanteiPercent = (self.ZanteiSeikai / self.total_questions) * 100
         ZanteiPercent = math.floor(ZanteiPercent)
-        CorrectPerc = string_num = str(ZanteiPercent)
+        CorrectPerc = self.string_num = str(ZanteiPercent)
 
         labelCorrect = ttk.Label(self.root, text= QuestCount + "問中、" + CorrectCount + "問正解！",font=self.Correct_font) 
         labelCorrect.place(x=60,y=40)
@@ -41,10 +41,10 @@ class ResultView:
         labelPercent = ttk.Label(self.root, text= "正解率：" + CorrectPerc + "%",font=self.Correct_font) 
         labelPercent.place(x=370,y=38)
 
-        result_font = tkfont.Font(family="Helvetica", size=20, weight="bold")
+        self.result_font = tkfont.Font(family="Helvetica", size=20, weight="bold")
         my_font = tkfont.Font(family="Helvetica", size=14, weight="bold")
         Wrong_font = tkfont.Font(family="Helvetica", size=10, weight="bold")
-        Correct_font = tkfont.Font(family="Helvetica", size=15, weight="bold")
+        self.Correct_font = tkfont.Font(family="Helvetica", size=15, weight="bold")
 
         """解答結果の部品"""
         labelframe = tk.LabelFrame(self.root, text="絞り込み条件",labelanchor="n",width=300,height=100,font=my_font)
@@ -62,9 +62,9 @@ class ResultView:
 
 
         """各種ボタン"""
-        button_list = ttk.Button(self.root,text = '単語一覧に戻る')
-        button_question = ttk.Button(self.root,text = '出題形式選択へ戻る')
-        button_again = ttk.Button(self.root,text = '同じ条件でもう一度解く')
+        button_list = ttk.Button(self.root,text = '単語一覧に戻る',command=lambda: self.controller.ReturnWordView())
+        button_question = ttk.Button(self.root,text = '出題形式選択へ戻る',command=lambda: self.controller.ReturnFormatSellect())
+        button_again = ttk.Button(self.root,text = '同じ条件でもう一度解く',command=lambda: self.controller.RedoQuestion())
         button_list.place(x=70, y=300) #
         button_question.place(x=70, y=350) #
         button_again.place(x=400, y=350) #
