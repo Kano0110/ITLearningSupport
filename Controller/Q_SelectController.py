@@ -4,22 +4,20 @@ from Model.Q_SelectModel import Q_SelectModel
 
 class Q_SelectController:
     def __init__(self, root_controller, model: Optional[Q_SelectModel] = None):
-        """初期化
+        """初期化 (マルチタグ・マルチカテゴリ対応)
         
-        Args:
-            root_controller: AppController インスタンス
-            model: Q_SelectModel インスタンス（デフォルト：新規作成）
+        root_controller: AppController インスタンス
+        model: Q_SelectModel インスタンス
         """
         self.app = root_controller
         self.model = model if model is not None else Q_SelectModel()
-        
-        # 状態管理
-        self.current_category: Optional[str] = None
-        self.current_tag: Optional[str] = None
+
+        # 単一選択から複数選択へ変更
+        self.selected_tags: set[str] = set()
+        self.selected_categories: set[str] = set()  # DB の category カラム参照
         self.selected_terms: List[str] = []
-        self.use_yomi_filter: bool = True
-        
-        # ビューと更新コールバック
+
+        # ビューと更新コールバック (callback(terms, summary_text, tags_set, categories_set)) を想定
         self.view: Optional[object] = None
         self.view_update_callback: Optional[Callable] = None
         
@@ -36,12 +34,9 @@ class Q_SelectController:
 
     def set_view_update_callback(self, callback: Callable):
         """ビューが更新コールバックを登録するメソッド
-        
-        Args:
-            callback: 呼び出し時に (tag_value, category_value) を受け取る関数
+        callback: (terms_list, summary_text, selected_tags, selected_categories) を受け取れる関数
         """
         self.view_update_callback = callback
-        # 登録時に現在の状態を通知
         try:
             self._notify_view_state()
         except Exception as e:
@@ -49,10 +44,10 @@ class Q_SelectController:
 
     def _notify_view_state(self):
         """ビューに現在の状態を通知"""
-        if self.view_update_callback:
-            tag_display = self.current_tag if self.current_tag else "全て"
-            category_display = self.current_category if self.current_category else "全て"
-            self.view_update_callback(tag_display, category_display)
+        if not self.view_update_callback:
+            return
+        summary = self.get_selection_summary()
+        self.view_update_callback(list(self.selected_terms), summary, set(self.selected_tags), set(self.selected_categories))
 
     def initialize(self):
         """初期化処理"""
@@ -65,48 +60,58 @@ class Q_SelectController:
         return True
 
     def get_available_categories(self) -> List[str]:
-        """利用可能なカテゴリを取得"""
+        """利用可能なカテゴリ (DB category) を取得"""
         return self.model.get_categories()
 
     def get_available_tags(self) -> List[str]:
         """利用可能なタグ一覧を取得"""
         return self.model.get_all_tags()
 
-    def select_category(self, category: str):
-        """カテゴリを選択
-        
-        Args:
-            category: 選択されたカテゴリ（50音のいずれか）
-        """
-        self.current_category = category
-        self.current_tag = None
-        # yomi フィルタを使用して用語を取得
-        self.selected_terms = self.model.get_terms_by_yomi(category)
-        self._notify_view_state()
+    # --- マルチ選択操作 ---
+    def toggle_tag(self, tag: str):
+        """タグの選択状態をトグル"""
+        if tag in self.selected_tags:
+            self.selected_tags.remove(tag)
+        else:
+            self.selected_tags.add(tag)
+        self._recompute_filtered_terms()
 
-    def clear_category(self):
-        """カテゴリ選択をクリア"""
-        self.current_category = None
-        self.current_tag = None
+    def toggle_category(self, category: str):
+        """カテゴリの選択状態をトグル (DB category)"""
+        if category in self.selected_categories:
+            self.selected_categories.remove(category)
+        else:
+            self.selected_categories.add(category)
+        self._recompute_filtered_terms()
+
+    def select_all_tags(self):
+        """全タグを選択"""
+        try:
+            tags = self.model.get_all_tags()
+            self.selected_tags = set(tags)
+            self._recompute_filtered_terms()
+        except Exception as e:
+            print(f"Warning: select_all_tags failed: {e}")
+
+    def select_all_categories(self):
+        """全カテゴリを選択 (DB category)"""
+        try:
+            cats = self.model.get_categories()
+            self.selected_categories = set(cats)
+            self._recompute_filtered_terms()
+        except Exception as e:
+            print(f"Warning: select_all_categories failed: {e}")
+
+    def clear_all(self):
+        """全チェック解除"""
+        self.selected_tags.clear()
+        self.selected_categories.clear()
         self.selected_terms = self.model.get_all_terms()
         self._notify_view_state()
 
-    def select_tag(self, tag: str):
-        """タグを選択
-        
-        Args:
-            tag: 選択されたタグ
-        """
-        self.current_tag = tag
-        self.current_category = None
-        self.selected_terms = self.model.get_terms_by_tag(tag)
-        self._notify_view_state()
-
-    def clear_tag(self):
-        """タグ選択をクリア"""
-        self.current_tag = None
-        self.current_category = None
-        self.selected_terms = self.model.get_all_terms()
+    def _recompute_filtered_terms(self):
+        """選択されたタグ・カテゴリに基づき再計算"""
+        self.selected_terms = self.model.get_terms_by_filters(list(self.selected_tags), list(self.selected_categories))
         self._notify_view_state()
 
     def get_selected_terms(self) -> List[str]:
@@ -118,37 +123,17 @@ class Q_SelectController:
         return self.selected_terms
 
     def get_selection_summary(self) -> str:
-        """選択サマリーを取得（表示用）
-        
-        Returns:
-            選択内容を説明する文字列
-        """
-        if self.current_tag:
-            return f"タグ: {self.current_tag} ({len(self.selected_terms)}個)"
-        elif self.current_category:
-            return f"カテゴリ: {self.current_category} ({len(self.selected_terms)}個)"
-        else:
-            return f"全て ({len(self.selected_terms)}個)"
+        """現在のマルチ選択状態のサマリー文字列"""
+        parts = []
+        if self.selected_tags:
+            parts.append(f"タグ[{len(self.selected_tags)}]")
+        if self.selected_categories:
+            parts.append(f"カテゴリ[{len(self.selected_categories)}]")
+        if not parts:
+            parts.append("全て")
+        return f"{' & '.join(parts)} : {len(self.selected_terms)}個"
 
-    def start_quiz_important_order(self):
-        """重要な順に出題を開始"""
-        if not self.selected_terms:
-            print("Error: No terms selected")
-            return
-        try:
-            self.app.start_quiz(self.selected_terms, mode='important')
-        except Exception as e:
-            print(f"Error: Failed to start important quiz: {e}")
-
-    def start_quiz_random(self):
-        """ランダムに出題を開始"""
-        if not self.selected_terms:
-            print("Error: No terms selected")
-            return
-        try:
-            self.app.start_quiz(self.selected_terms, mode='random')
-        except Exception as e:
-            print(f"Error: Failed to start random quiz: {e}")
+    # 旧メソッド(重要順/ランダム)は現在未使用想定。必要なら復活させる。
 
     def start_quiz_hide_words(self):
         """単語を隠して出題を開始（解説のみを表示）"""
