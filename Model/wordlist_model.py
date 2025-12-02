@@ -94,9 +94,16 @@ class WordListModel(BaseModel):
         if not query:
             return self.get_all_terms()
         try:
-            query_lower = query.lower()
-            all_terms = self.get_all_terms()
-            return [term for term in all_terms if query_lower in term.lower()]
+            with self.get_conn() as conn:
+                # word_name と yomi の両方で検索
+                cur = conn.execute("""
+                    SELECT DISTINCT word_name 
+                    FROM terms 
+                    WHERE (word_name LIKE ? OR yomi LIKE ?) 
+                    AND word_name IS NOT NULL
+                    ORDER BY word_name;
+                """, (f'%{query}%', f'%{query}%'))
+                return [row['word_name'] for row in cur.fetchall()]
         except Exception:
             logger.exception("検索処理エラー")
             return []
