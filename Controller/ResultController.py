@@ -6,7 +6,7 @@ from tkinter import messagebox
 import Q_quiz_Controller
 import math
 
-class WordEntryController:
+class ResultController:
     """"""
 
     def __init__(self, app_controller, model: Optional[ResultModel] = None):
@@ -50,7 +50,7 @@ class WordEntryController:
         self.CorrectPercent = math.floor(self.CorrectPercent)
         self.view.CorrectPercent = self.string_num = str(self.CorrectPercent)
 
-        
+
 
 
 
