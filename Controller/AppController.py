@@ -20,7 +20,7 @@ class AppController:
             "wordentry": lambda: self._create_wordentry_controller(),
             "qselect": lambda: self._create_qselect_controller(),
             "quiz": lambda: self._create_quiz_controller(),
-            
+            "result": lambda: self._create_result_controller()
         }
 
         # 最初の画面を表示
@@ -61,6 +61,16 @@ class AppController:
                 self._models["quiz"] = None
         return self._models["quiz"]
 
+    def _get_result_model(self):
+        if "result" not in self._models:
+            try:
+                from Model.ResultModel import ResultModel
+                self._models["result"] = ResultModel(db_path=self.db_path)
+            except ImportError:
+                print("Warning: ResultModel not found or import error.")
+                self._models["result"] = None
+        return self._models["result"]
+
     # --- コントローラ生成ラッパ ---
     def _create_home_controller(self):
         from Controller.HomeController import HomeController
@@ -86,7 +96,11 @@ class AppController:
         from Controller.Q_quiz_Controller import Q_Quiz_Controller
         return Q_Quiz_Controller(self, self._get_quiz_model())
 
-    # --- 画面遷移 (修正: 引数を追加) ---
+    def _create_result_controller(self):
+        from Controller.ResultController import ResultController
+        return ResultController(self, self._get_result_model())
+
+   # --- 画面遷移 (修正: 引数を追加) ---
     def switch_view(self, view_name, word_name: str = None, context_list: list = None):
         """指定されたビューに切り替える"""
         if view_name not in self.controllers:
@@ -174,9 +188,14 @@ class AppController:
             print(f"Error: Failed to start quiz: {e}")
             traceback.print_exc()
 
-    def show_quiz_result(self, correct_count, total_questions):
-        from View.Q_resultView import Q_ResultView
-        result_view = Q_ResultView(self.root, controller=self,
-                                correct_count=correct_count,
-                                total_questions=total_questions)
-        self._switch_view(result_view)
+    def show_quiz_result(self, correct_count, total_questions, category=None, tag=None, wronged_terms=None):
+        """結果画面へ遷移"""
+        self.switch_view("result")
+        if hasattr(self.current_controller, "set_result"):
+            self.current_controller.set_result(
+                correct_count=correct_count,
+                total_questions=total_questions,
+                category=category,
+                tag=tag,
+                wronged_terms=wronged_terms
+            )

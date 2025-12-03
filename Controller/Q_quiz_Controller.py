@@ -17,6 +17,7 @@ class Q_Quiz_Controller:
         self.current_index: int = 0
         self.correct_count: int = 0
         self.quiz_data: List[dict] = []
+        self.wronged_terms: List[dict] = []
 
     def show(self):
         """AppController から呼ばれる表示処理"""
@@ -76,7 +77,6 @@ class Q_Quiz_Controller:
 
 
     def handle_answer(self, selected: dict):
-        """選択肢がクリックされたときの処理"""
         q = self.quiz_data[self.current_index]
         correct_term = q["term"]
         is_correct = False
@@ -89,13 +89,24 @@ class Q_Quiz_Controller:
         q["correct"] = is_correct
         if is_correct:
             self.correct_count += 1
+        else:
+            # 間違えた問題を記録
+            print(f"Wrong answer recorded: {selected} vs correct {correct_term}")#デバッグ用
+            self.wronged_terms.append({
+                "term": correct_term.get("name"),
+                "desc": correct_term.get("desc"),
+                "user_answer": selected.get("name") or selected.get("desc")
+            })
 
         self.view.show_result(is_correct, correct_term)
 
     def next_question(self):
         """次の問題へ進む"""
         self.current_index += 1
-        self._show_current_question()
+        if self.current_index < len(self.quiz_data):
+            self._show_current_question()
+        else:
+            self._finish_quiz()  # ← 最後の問題を終えたら終了処理へ
 
     def finish_quiz(self):
         """ユーザーが「回答を終了する」を押した場合"""
@@ -103,5 +114,11 @@ class Q_Quiz_Controller:
 
     def _finish_quiz(self):
         """結果画面へ遷移"""
-        self.app.switch_view("home")
-    #    self.app.show_quiz_result(self.correct_count, len(self.quiz_data))
+        #self.app.switch_view("home")
+        self.app.show_quiz_result(
+        correct_count=self.correct_count,
+        total_questions=len(self.quiz_data),
+        category=self.category,
+        tag=self.tag,
+        wronged_terms=self.wronged_terms
+    )
