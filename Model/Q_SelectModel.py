@@ -1,109 +1,134 @@
-# Model/Q_SelectModel.py
 import logging
-from typing import List, Dict, Optional
-from .BaseModel import BaseModel
+from typing import List, Optional
+
+try:
+    from .BaseModel import BaseModel
+except ImportError:
+    # テスト実行用ダミー
+    class BaseModel:
+        def __init__(self, db_path=None): 
+            self.db_path = db_path
+        def get_conn(self): 
+            pass
+        def is_db_available(self): 
+            return True
 
 logger = logging.getLogger(__name__)
-
-# 読み仮名マップ（各行の先頭文字群）
-# 清音 + 濁点 + 半濁点を含める
-YOMI_MAP = {
-    'あ': ('あ', 'い', 'う', 'え', 'お'),
-    'か': ('か', 'き', 'く', 'け', 'こ', 'が', 'ぎ', 'ぐ', 'げ', 'ご'),
-    'さ': ('さ', 'し', 'す', 'せ', 'そ', 'ざ', 'じ', 'ず', 'ぜ', 'ぞ'),
-    'た': ('た', 'ち', 'つ', 'て', 'と', 'だ', 'ぢ', 'づ', 'で', 'ど'),
-    'な': ('な', 'に', 'ぬ', 'ね', 'の'),
-    'は': ('は', 'ひ', 'ふ', 'へ', 'ほ', 'ば', 'び', 'ぶ', 'べ', 'ぼ', 'ぱ', 'ぴ', 'ぷ', 'ぺ', 'ぽ'),
-    'ま': ('ま', 'み', 'む', 'め', 'も'),
-    'や': ('や', 'ゆ', 'よ'),
-    'ら': ('ら', 'り', 'る', 'れ', 'ろ'),
-    'わ': ('わ', 'を', 'ん'),
-}
 
 class Q_SelectModel(BaseModel):
     """問題選択画面のデータモデル"""
 
     def __init__(self, db_path: Optional[str] = None):
+        """初期化
+        
+        Args:
+            db_path: データベースファイルパス（未指定時はデフォルト）
+        """
         super().__init__(db_path=db_path)
 
     def get_all_terms(self) -> List[str]:
-        """全ての用語を取得"""
+        """全ての用語を取得
+        
+        Returns:
+            全用語名のリスト（アルファベット順）
+        """
         try:
             with self.get_conn() as conn:
-                cur = conn.execute("SELECT DISTINCT word_name FROM terms WHERE word_name IS NOT NULL ORDER BY word_name;")
+                cur = conn.execute(
+                    "SELECT DISTINCT word_name FROM terms "
+                    "WHERE word_name IS NOT NULL "
+                    "ORDER BY word_name COLLATE NOCASE;"
+                )
                 rows = cur.fetchall()
-                terms = [row['word_name'] for row in rows]
-                return terms
+                return [row['word_name'] for row in rows]
         except Exception:
             logger.exception("全件取得エラー")
             return []
 
-    def get_terms_by_category(self, category: str) -> List[str]:
-        """カテゴリで用語をフィルタリング"""
-        if category not in YOMI_MAP:
-            return []
-        try:
-            with self.get_conn() as conn:
-                cur = conn.execute(
-                    "SELECT DISTINCT word_name FROM terms WHERE category = ? AND word_name IS NOT NULL ORDER BY word_name;",
-                    (category,)
-                )
-                return [row['word_name'] for row in cur.fetchall()]
-        except Exception:
-            logger.exception("カテゴリ別取得エラー")
-            return []
+    def get_terms_by_filters(self, selected_tags: List[str], selected_categories: List[str]) -> List[str]:
+        """選択されたタグとカテゴリに基づいて用語をフィルタリング
+        
+        タグとカテゴリの両方が選択されている場合はAND条件で絞り込む。
+        片方のみ選択されている場合は、その条件のみで絞り込む。
+        
+        Args:
+            selected_tags: 選択されたタグのリスト
+            selected_categories: 選択されたカテゴリのリスト
+            
+        Returns:
+            フィルタリングされた用語名のリスト
+        """
+        if not selected_tags and not selected_categories:
+            return self.get_all_terms()
 
-    def get_terms_by_yomi(self, category: str) -> List[str]:
-        """読み仮名で用語をフィルタリング"""
-        if category not in YOMI_MAP:
-            return []
-        try:
-            placeholders = ','.join('?' * len(YOMI_MAP[category]))
-            params = tuple(YOMI_MAP[category])
-            sql = f"""
-                SELECT DISTINCT word_name, yomi
-                FROM terms
-                WHERE SUBSTR(yomi, 1, 1) IN ({placeholders}) AND word_name IS NOT NULL
-                ORDER BY yomi, word_name;
-            """
-            with self.get_conn() as conn:
-                cur = conn.execute(sql, params)
-                return [row['word_name'] for row in cur.fetchall()]
-        except Exception:
-            logger.exception("読み仮名別取得エラー")
-            return []
+        conditions = []
+        params = []
 
-    def get_terms_by_tag(self, tag: str) -> List[str]:
-        """タグで用語をフィルタリング"""
-        if not tag:
-            return []
+        if selected_tags:
+            placeholders = ','.join('?' * len(selected_tags))
+            conditions.append(f"tag IN ({placeholders})")
+            params.extend(selected_tags)
+
+        if selected_categories:
+            placeholders = ','.join('?' * len(selected_categories))
+            conditions.append(f"category IN ({placeholders})")
+            params.extend(selected_categories)
+
+        sql = "SELECT DISTINCT word_name FROM terms WHERE word_name IS NOT NULL"
+        if conditions:
+            sql += " AND " + " AND ".join(conditions)
+        sql += " ORDER BY word_name COLLATE NOCASE;"
+
         try:
             with self.get_conn() as conn:
-                cur = conn.execute(
-                    "SELECT DISTINCT word_name FROM terms WHERE tag = ? AND word_name IS NOT NULL ORDER BY word_name;",
-                    (tag,)
-                )
+                cur = conn.execute(sql, tuple(params))
                 return [row['word_name'] for row in cur.fetchall()]
         except Exception:
-            logger.exception("タグ別取得エラー")
+            logger.exception("フィルタリング取得エラー")
             return []
 
     def get_categories(self) -> List[str]:
-        """利用可能なカテゴリを取得"""
-        return list(YOMI_MAP.keys())
-
-    def get_all_tags(self) -> List[str]:
-        """データベースから全タグを取得"""
+        """利用可能なカテゴリをDBから取得
+        
+        Returns:
+            カテゴリ名のリスト（アルファベット順）
+        """
         try:
             with self.get_conn() as conn:
-                cur = conn.execute("SELECT DISTINCT tag FROM terms WHERE tag IS NOT NULL ORDER BY tag;")
+                cur = conn.execute(
+                    "SELECT DISTINCT category FROM terms "
+                    "WHERE category IS NOT NULL "
+                    "ORDER BY category COLLATE NOCASE;"
+                )
                 rows = cur.fetchall()
-                tags = [row['tag'] for row in rows if row['tag']]
-                return tags
+                return [row['category'] for row in rows if row['category']]
+        except Exception:
+            logger.exception("カテゴリ一覧取得エラー")
+            return []
+
+    def get_all_tags(self) -> List[str]:
+        """データベースから全タグを取得
+        
+        Returns:
+            タグ名のリスト（アルファベット順）
+        """
+        try:
+            with self.get_conn() as conn:
+                cur = conn.execute(
+                    "SELECT DISTINCT tag FROM terms "
+                    "WHERE tag IS NOT NULL "
+                    "ORDER BY tag COLLATE NOCASE;"
+                )
+                rows = cur.fetchall()
+                return [row['tag'] for row in rows if row['tag']]
         except Exception:
             logger.exception("タグ一覧取得エラー")
             return []
 
     def is_db_available(self) -> bool:
-        """データベースが利用可能か確認"""
-        return self.db_path is not None
+        """データベースが利用可能かチェック
+        
+        Returns:
+            データベースが利用可能な場合True
+        """
+        return getattr(self, 'db_path', None) is not None
