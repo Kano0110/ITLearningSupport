@@ -1,7 +1,7 @@
 """
 Model層: 単語の詳細取得、更新、削除
 """
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from Model.BaseModel import BaseModel
 import logging
 
@@ -40,7 +40,6 @@ class WordBookModel(BaseModel):
             logger.exception("詳細取得エラー")
             return None
 
-    # 追加: デフォルト表示用に最初の単語名を取得するメソッド
     def get_first_word_name(self) -> Optional[str]:
         """データベースの最初の単語名を取得"""
         try:
@@ -51,6 +50,30 @@ class WordBookModel(BaseModel):
         except Exception:
             logger.exception("最初の単語取得エラー")
             return None
+
+    # --- 追加: 編集画面のプルダウン用 ---
+    def get_all_categories(self) -> List[str]:
+        """全カテゴリを取得"""
+        try:
+            with self._get_connection() as conn:
+                cur = conn.execute("SELECT DISTINCT category FROM terms WHERE category IS NOT NULL AND category != '' ORDER BY category;")
+                rows = cur.fetchall()
+                return [row['category'] for row in rows]
+        except Exception:
+            logger.exception("カテゴリ一覧取得エラー")
+            return []
+
+    def get_all_tags(self) -> List[str]:
+        """全タグを取得"""
+        try:
+            with self._get_connection() as conn:
+                cur = conn.execute("SELECT DISTINCT tag FROM terms WHERE tag IS NOT NULL AND tag != '' ORDER BY tag;")
+                rows = cur.fetchall()
+                return [row['tag'] for row in rows]
+        except Exception:
+            logger.exception("タグ一覧取得エラー")
+            return []
+    # ----------------------------------
 
     def update_term(self, word_id: int, word_name: str = None, explain: str = None,
                     tag: str = None, category: str = None, yomi: str = None) -> bool:
