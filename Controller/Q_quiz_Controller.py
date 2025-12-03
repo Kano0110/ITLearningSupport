@@ -29,22 +29,18 @@ class Q_Quiz_Controller:
         if self.view:
             self.view.hide()
 
-    def start(self, mode: str = "hide_word", tag: Optional[str] = None,
-              category: Optional[str] = None, num_questions: int = 10):
-        """出題開始"""
+    def start(self, selected_terms: List[str], mode: str = "hide_word", num_questions: int = 10):
         self.mode = mode
-        self.tag = tag
-        self.category = category
+        pool = list(selected_terms)
+        random.shuffle(pool)
         self.num_questions = num_questions
 
-        self.term_list = self.model.get_selected_terms(tag=tag, category=category)
-        random.shuffle(self.term_list)
-        self.term_list = self.term_list[:num_questions]
+        self.term_list = pool[:num_questions]
 
         self.quiz_data = []
-        for term in self.term_list:
-            detail = self.model.get_term_detail(term)
-            distractors = self.model.get_distractors(term, tag=tag, category=category)
+        for term_name in self.term_list:
+            detail = self.model.get_term_detail(term_name)
+            distractors = self.model.get_distractors(detail["id"], tag=detail.get("tag"), category=detail.get("category"))
             self.quiz_data.append({
                 "term": detail,
                 "choices": self._build_choices(detail, distractors),
@@ -56,37 +52,28 @@ class Q_Quiz_Controller:
         self.correct_count = 0
         self._show_current_question()
 
-    def _build_choices(self, correct_term: dict, distractors: List[dict]) -> List[dict]:
-        """正答とハズレ選択肢を混ぜてランダム化"""
-        choices = [correct_term]
-        for d in distractors:
-            if self.mode == "hide_word":
-                if d.get("name") != correct_term.get("name"):
-                    choices.append(d)
-            else:
-                if d.get("desc") != correct_term.get("desc"):
-                    choices.append(d)
-            if len(choices) >= 4:
-                break
-        while len(choices) < 4:
-            choices.append({"name": "（不足）", "desc": "（不足）"})
+    def _build_choices(self, correct_term, distractors):
+        choices = [correct_term] + distractors
+        if len(choices) > 4:
+            choices = choices[:4]
         random.shuffle(choices)
         return choices
-
+        
     def _show_current_question(self):
-        if self.current_index >= len(self.quiz_data):
-            self._finish_quiz()
-            return
         q = self.quiz_data[self.current_index]
+        term = q["term"]
+        choices = q["choices"]
+
         self.view.display_question(
             index=self.current_index + 1,
             total=len(self.quiz_data),
-            term=q["term"],
-            choices=q["choices"],
+            term=term,
+            choices=choices,
             mode=self.mode,
-            tag=self.tag,
-            category=self.category
+            tag=term.get("tag"),
+            category=term.get("category")
         )
+
 
     def handle_answer(self, selected: dict):
         """選択肢がクリックされたときの処理"""
