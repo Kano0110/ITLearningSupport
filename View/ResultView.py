@@ -13,12 +13,6 @@ class ResultView:
         self.frame = ttk.Frame(self.root)
         self.scrollbar_frame = tk.Frame(root)
 
-        ZanteiCategory = "ネットワーク"
-        ZanteiTag = "絞り込みなし"
-        total_questions = 10
-        ZanteiSeikai = 8
-        ZanteiPercent = 1500
-        ZanteiWrong = ["DNS","HTTP/HTTPS"]
 
         self._build_ui()
 #cd_Bunya
@@ -27,18 +21,12 @@ class ResultView:
         self.root.title("結果発表")
 
         """正解数と正解率"""
-        QuestCount = self.string_num = str(self.total_questions)
-        CorrectCount = self.string_num = str(self.ZanteiSeikai)
+        self.controller.set_Correct()
 
-
-        ZanteiPercent = (self.ZanteiSeikai / self.total_questions) * 100
-        ZanteiPercent = math.floor(ZanteiPercent)
-        CorrectPerc = self.string_num = str(ZanteiPercent)
-
-        labelCorrect = ttk.Label(self.root, text= QuestCount + "問中、" + CorrectCount + "問正解！",font=self.Correct_font) 
+        labelCorrect = ttk.Label(self.root, text= self.QuestCount + "問中、" + self.CorrectedCount + "問正解！",font=self.Correct_font) 
         labelCorrect.place(x=60,y=40)
 
-        labelPercent = ttk.Label(self.root, text= "正解率：" + CorrectPerc + "%",font=self.Correct_font) 
+        labelPercent = ttk.Label(self.root, text= "正解率：" + self.CorrectPercent + "%",font=self.Correct_font) 
         labelPercent.place(x=370,y=38)
 
         self.result_font = tkfont.Font(family="Helvetica", size=20, weight="bold")
@@ -76,7 +64,7 @@ class ResultView:
         labelWrong.place(x=380, y=100)
         self.scrollbar_frame.place(x=380, y=120)
 
-        for i in self.ZanteiWrong:
+        for i in self.WrongedAns:
             listboxWrong.insert(tk.END, i)
         listboxWrong.pack(side=tk.LEFT)
 
