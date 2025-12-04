@@ -1,54 +1,35 @@
 #ResultModel.py
-
-from typing import Optional, List
+from typing import Optional, List, Dict
 from Model.BaseModel import BaseModel
 import logging
-
+ 
 logger = logging.getLogger(__name__)
-
+ 
 class ResultModel(BaseModel):
     def __init__(self, db_path: Optional[str] = None, use_stub: bool = False):
         super().__init__(db_path=db_path)
         self.use_stub = use_stub
-        self._stub_categories = ["生物", "物理", "数学", "歴史"]
-        self._stub_tags = ["松下","日立","東芝","ソニー","シャープ","三井","三菱","住友","安田"]
-
-    def get_categories(self) -> List[str]:
-        if self.use_stub:
-            return self._stub_categories
-        try:
-            with self.get_conn() as conn:
-                cur = conn.execute("SELECT DISTINCT category FROM terms WHERE category IS NOT NULL ORDER BY category;")
-                return [r["category"] for r in cur.fetchall()]
-        except Exception:
-            logger.exception("カテゴリ取得エラー")
-            return self._stub_categories
-
-    def get_tag(self) -> List[str]:
-        if self.use_stub:
-            return self._stub_tags
-        try:
-            with self.get_conn() as conn:
-                cur = conn.execute("SELECT DISTINCT tag FROM terms WHERE tag IS NOT NULL ORDER BY tag;")
-                rows = [r["tag"] for r in cur.fetchall()]
-                return rows if rows else self._stub_tags
-        except Exception:
-            logger.exception("タグ取得エラー")
-            return self._stub_tags
-
-    def create_word(self, word_name: str, explain: str, yomi: Optional[str]=None, category: Optional[str]=None, tag: Optional[str]=None) -> Optional[int]:
-        if not word_name or not explain:
-            raise ValueError("word_name and explain required")
-        if self.use_stub:
-            # stub: 単純に擬似IDを返す
-            return 1
-        try:
-            with self.get_conn() as conn:
-                cur = conn.execute(
-                    "INSERT INTO terms (word_name, yomi, explain, category, tag) VALUES (?, ?, ?, ?, ?);",
-                    (word_name, yomi, explain, category, tag)
-                )
-                return cur.lastrowid
-        except Exception:
-            logger.exception("単語作成エラー")
-            return None
+ 
+        # クイズ結果保持用（暫定）
+        self.correct_count = 0
+        self.total_questions = 0
+        self.wronged_terms: List[Dict] = []
+ 
+    # --- クイズ結果関連機能 ---
+    def save_result(self, correct_count: int, total_questions: int, wronged_terms: List[Dict]):
+        """クイズ結果を保存（暫定的にメモリ保持）"""
+        self.correct_count = correct_count
+        self.total_questions = total_questions
+        self.wronged_terms = wronged_terms
+ 
+    def get_result_summary(self) -> Dict:
+        """結果の要約を返す"""
+        percent = 0
+        if self.total_questions > 0:
+            percent = int((self.correct_count / self.total_questions) * 100)
+        return {
+            "correct_count": self.correct_count,
+            "total_questions": self.total_questions,
+            "percent": percent,
+            "wronged_terms": self.wronged_terms
+        }
