@@ -51,7 +51,7 @@ class WordListView:
     def _create_navigation_buttons(self):
         """ナビゲーションボタン（Home、WordEntry）を作成"""
         nav_frame = tk.Frame(self.frame, bg='#2C3E50')
-        nav_frame.pack(fill='x', ipady=10)
+        nav_frame.pack(fill='x', ipady=15)
         
         center_nav = ttk.Frame(nav_frame)
         center_nav.pack(expand=True)
@@ -73,7 +73,7 @@ class WordListView:
     def _create_index_buttons(self):
         """五十音インデックスボタンを作成"""
         index_frame = tk.Frame(self.frame, bg='#ECF0F1')
-        index_frame.pack(fill='x', ipady=8)
+        index_frame.pack(fill='x', ipady=12)
         
         center_index = ttk.Frame(index_frame)
         center_index.pack(expand=True)
@@ -113,7 +113,7 @@ class WordListView:
 
     def _create_filter_selectors(self):
         """タグとカテゴリのフィルタセレクタを作成"""
-        filter_frame = ttk.Frame(self.frame, padding=(8, 3))
+        filter_frame = ttk.Frame(self.frame, padding=(10, 6))
         filter_frame.pack(fill='x')
         
         center_filter = ttk.Frame(filter_frame)
@@ -203,7 +203,7 @@ class WordListView:
 
     def _create_search_bar(self):
         """検索バーと統計情報を作成"""
-        search_frame = ttk.Frame(self.frame, padding=(8, 4))
+        search_frame = ttk.Frame(self.frame, padding=(10, 6))
         search_frame.pack(fill='x')
         
         center_search = ttk.Frame(search_frame)
@@ -234,7 +234,7 @@ class WordListView:
 
     def _create_list_area(self):
         """スクロール可能な用語リスト表示エリアを作成"""
-        list_frame = ttk.Frame(self.frame, padding=8)
+        list_frame = ttk.Frame(self.frame, padding=(15, 5, 15, 8))
         list_frame.pack(expand=True, fill='both')
 
         # キャンバスとスクロールバー
@@ -327,25 +327,29 @@ class WordListView:
             col_index = i % NUM_COLUMNS
             row_index = i // NUM_COLUMNS
             
+            # 12文字以上の場合は省略表示
+            display_text = name if len(name) < 12 else name[:11] + '…'
+            
             lbl = ttk.Label(
                 self.scrollable_frame,
-                text=name,
-                padding=(7, 5),
+                text=display_text,
+                padding=(2, 4),
                 cursor='hand2',
                 anchor='center',
-                justify='center'
+                justify='center',
+                width=15  # 固定幅を設定して均等に保つ
             )
-            lbl.grid(row=row_index, column=col_index, sticky='ew', padx=5, pady=2)
+            lbl.grid(row=row_index, column=col_index, sticky='ew', padx=3, pady=2)
             
             # イベントバインド
             lbl.bind('<Button-1>', lambda e, term=name: self.on_term_click(term))
-            lbl.bind('<Enter>', lambda e, l=lbl: l.configure(foreground="#DB6D13"))
+            lbl.bind('<Enter>', lambda e, l=lbl: l.configure(foreground='#E67E22'))
             lbl.bind('<Leave>', lambda e, l=lbl: l.configure(foreground='black'))
             self._bind_mousewheel_events(lbl)
 
-        # 各列を均等に広げる
+        # 各列を均等に広げる（同じ重みを設定）
         for col in range(NUM_COLUMNS):
-            self.scrollable_frame.columnconfigure(col, weight=1)
+            self.scrollable_frame.columnconfigure(col, weight=1, uniform='equal')
     
     def _display_empty_message(self, message: str = None):
         """用語がない場合のメッセージを表示
