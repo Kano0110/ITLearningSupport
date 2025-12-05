@@ -44,7 +44,8 @@ class ResultController:
         self.total_questions = total_questions
         self.category = category
         self.tag = tag
-        self.wronged_terms = wronged_terms or []
+        #self.wronged_terms = wronged_terms or []
+        self.wronged_terms = [item["term"] for item in (wronged_terms or [])]
 
         #臨時追加
         self.selected_terms = selected_terms
@@ -83,7 +84,7 @@ class ResultController:
         self.app.current_controller.hide()
         self.app.current_controller = quiz
         quiz.show()
-        
+
         quiz.start(
         selected_terms=self.selected_terms,
         mode=self.mode,
