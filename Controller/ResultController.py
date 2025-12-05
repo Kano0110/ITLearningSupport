@@ -18,6 +18,7 @@ class ResultController:
         self.category = None
         self.tag = None
         self.wronged_terms = []
+        self.mode = None
  
     def _ensure_view(self):
         """view が未生成なら生成する（遅延生成）。"""
@@ -36,7 +37,7 @@ class ResultController:
         if self.view and hasattr(self.view, "close"):
             self.view.close()
             
-    def set_result(self, correct_count, total_questions, category, tag, wronged_terms):
+    def set_result(self, correct_count, total_questions, category, tag, wronged_terms, mode, selected_terms, num_questions):
         
 
         self.correct_count = correct_count
@@ -44,7 +45,11 @@ class ResultController:
         self.category = category
         self.tag = tag
         self.wronged_terms = wronged_terms or []
-        
+
+        #臨時追加
+        self.selected_terms = selected_terms
+        self.mode = mode
+        self.num_questions = num_questions        
 
         percent = 0
         if total_questions > 0:
@@ -59,7 +64,7 @@ class ResultController:
             percent=percent,
             category=self.category,
             tag=self.tag,
-            wronged=self.wronged_terms
+            wronged=self.wronged_terms,
         )
     # --- 遷移系メソッド ---
     def return_wordlist(self):
@@ -72,4 +77,16 @@ class ResultController:
  
     def redo_quiz(self):
         """同じ条件でもう一度解く（暫定）"""
-        self.app.switch_view("qselect")
+        quiz = self.app._create_quiz_controller()  # 新しい quiz controller を作る
+
+    # 画面切り替え
+        self.app.current_controller.hide()
+        self.app.current_controller = quiz
+        quiz.show()
+        
+        quiz.start(
+        selected_terms=self.selected_terms,
+        mode=self.mode,
+        num_questions=self.num_questions
+        )
+ 

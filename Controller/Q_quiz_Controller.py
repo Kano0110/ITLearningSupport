@@ -125,5 +125,11 @@ class Q_Quiz_Controller:
         total_questions=len(self.quiz_data),
         category=self.category,
         tag=self.tag,
-        wronged_terms=self.wronged_terms
+        wronged_terms=self.wronged_terms,
+
+#臨時追加
+        selected_terms=self.term_list,
+        mode=self.mode,
+        num_questions=self.num_questions
+
     )
