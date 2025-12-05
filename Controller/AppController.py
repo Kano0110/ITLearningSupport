@@ -1,3 +1,4 @@
+#AppController.py
 import traceback # デバッグ用
 
 class AppController:
@@ -19,7 +20,7 @@ class AppController:
             "wordentry": lambda: self._create_wordentry_controller(),
             "qselect": lambda: self._create_qselect_controller(),
             "quiz": lambda: self._create_quiz_controller(),
-            
+            "result": lambda: self._create_result_controller()
         }
 
         # 最初の画面を表示
@@ -60,6 +61,16 @@ class AppController:
                 self._models["quiz"] = None
         return self._models["quiz"]
 
+    def _get_result_model(self):
+        if "result" not in self._models:
+            try:
+                from Model.ResultModel import ResultModel
+                self._models["result"] = ResultModel(db_path=self.db_path)
+            except ImportError:
+                print("Warning: ResultModel not found or import error.")
+                self._models["result"] = None
+        return self._models["result"]
+
     # --- コントローラ生成ラッパ ---
     def _create_home_controller(self):
         from Controller.HomeController import HomeController
@@ -85,7 +96,11 @@ class AppController:
         from Controller.Q_quiz_Controller import Q_Quiz_Controller
         return Q_Quiz_Controller(self, self._get_quiz_model())
 
-    # --- 画面遷移 (修正: 引数を追加) ---
+    def _create_result_controller(self):
+        from Controller.ResultController import ResultController
+        return ResultController(self, self._get_result_model())
+
+   # --- 画面遷移 (修正: 引数を追加) ---
     def switch_view(self, view_name, word_name: str = None, context_list: list = None):
         """指定されたビューに切り替える"""
         if view_name not in self.controllers:
@@ -144,44 +159,43 @@ class AppController:
         # switch_view に引数を渡すように統一
         self.switch_view("wordbook", word_name=word_name)
 
-    def start_quiz(self, term_list, mode: str = "random", num_questions: int = 10):
-        """
-        Q_SelectController から呼ばれるエントリポイント。
-        """
+    def start_quiz(self, term_list, mode: str = "hide_word", num_questions: int = 10):
         try:
-            # 生成
             from Controller.Q_quiz_Controller import Q_Quiz_Controller
-            
             quiz_model = self._get_quiz_model()
             if not quiz_model:
-                 print("Error: Quiz model could not be initialized.")
-                 return
+                print("Error: Quiz model could not be initialized.")
+                return
 
             quiz_ctrl = Q_Quiz_Controller(self, quiz_model)
-            
-            # 切り替え
+
             if self.current_controller:
                 try:
                     self.current_controller.hide()
                 except Exception:
                     pass
-            
+
             self.current_controller = quiz_ctrl
             quiz_ctrl.show()
-            
-            # クイズ開始メソッドを呼ぶ (Controllerの実装に合わせて調整)
+
+            # 修正：Q_SelectController から渡された mode を使う
             if hasattr(quiz_ctrl, "start"):
-                quiz_ctrl.start(mode="hide_word", tag=None, category=None, num_questions=num_questions)
+                quiz_ctrl.start(selected_terms=term_list, mode=mode, num_questions=num_questions)
             elif hasattr(quiz_ctrl, "start_quiz"):
                 quiz_ctrl.start_quiz(term_list)
-                
+
         except Exception as e:
             print(f"Error: Failed to start quiz: {e}")
             traceback.print_exc()
-    
-    def show_quiz_result(self, correct_count, total_questions):
-        from View.Q_resultView import Q_ResultView
-        result_view = Q_ResultView(self.root, controller=self,
-                                correct_count=correct_count,
-                                total_questions=total_questions)
-        self._switch_view(result_view)
+
+    def show_quiz_result(self, correct_count, total_questions, category=None, tag=None, wronged_terms=None):
+        """結果画面へ遷移"""
+        self.switch_view("result")
+        if hasattr(self.current_controller, "set_result"):
+            self.current_controller.set_result(
+                correct_count=correct_count,
+                total_questions=total_questions,
+                category=category,
+                tag=tag,
+                wronged_terms=wronged_terms
+            )
