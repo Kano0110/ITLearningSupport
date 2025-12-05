@@ -51,23 +51,41 @@ class WordListView:
     def _create_navigation_buttons(self):
         """ナビゲーションボタン（Home、WordEntry）を作成"""
         nav_frame = tk.Frame(self.frame, bg='#2C3E50')
-        nav_frame.pack(fill='x', ipady=15)
+        nav_frame.pack(fill='x', ipady=5, padx=40, pady=(20, 0))
         
-        center_nav = ttk.Frame(nav_frame)
-        center_nav.pack(expand=True)
+        # タイトルラベル（中央配置）
+        title_label = tk.Label(
+            nav_frame,
+            text="単語一覧",
+            bg='#2C3E50',
+            fg='white',
+            font=('Arial', 14, 'bold')
+        )
+        title_label.pack(anchor='center', pady=(0, 0))
+        
+        # ナビゲーションボタン（色枠の外に配置）
+        button_frame = tk.Frame(self.frame)
+        button_frame.pack(fill='x', pady=20)
+        
+        # ボタンを中央に配置するためのサブフレーム
+        center_buttons = ttk.Frame(button_frame)
+        center_buttons.pack(expand=True)
         
         # スタイル設定
         style = ttk.Style()
-        style.configure('Home.TButton', foreground='#3498DB')
-        style.configure('Entry.TButton', foreground='#27AE60')
+        style.configure('Home.TButton', foreground="#1523E6")
+        style.configure('Quiz.TButton', foreground="#E67E22")
+        style.configure('Entry.TButton', foreground="#099945")
+        
         
         buttons = [
-            ("← Home", self.on_go_home_click, 'Home.TButton'),
-            ("単語登録 →", self.on_go_wordentry_click, 'Entry.TButton')
+            ("Home", self.on_go_home_click, 'Home.TButton'),
+            ("問題を解く", self.on_go_quiz_click, 'Quiz.TButton'),
+            ("単語登録", self.on_go_wordentry_click, 'Entry.TButton')
         ]
         
         for text, command, style_name in buttons:
-            btn = ttk.Button(center_nav, text=text, command=command, style=style_name)
+            btn = ttk.Button(center_buttons, text=text, command=command, style=style_name)
             btn.pack(side='left', padx=5)
 
     def _create_index_buttons(self):
@@ -205,7 +223,6 @@ class WordListView:
         """検索バーと統計情報を作成"""
         search_frame = ttk.Frame(self.frame, padding=(10, 6))
         search_frame.pack(fill='x')
-        
         center_search = ttk.Frame(search_frame)
         center_search.pack(expand=True)
         
@@ -216,7 +233,12 @@ class WordListView:
         self.search_var = tk.StringVar()
         search_entry = ttk.Entry(center_search, textvariable=self.search_var, width=30)
         search_entry.pack(side='left', padx=(4, 4))
-        self.search_var.trace_add('write', self.on_search_change)
+
+        search_entry.bind('<KeyRelease>',  self.on_serach_change)
+        self.after_id = None
+        #self.search_var.trace_add('write', self.on_search_change)
+        # Enterキーバインド
+        #search_entry.bind('<Return>', self.on_search_enter)
         
         # クリアボタン
         clear_btn = ttk.Button(center_search, text="クリア", command=self.on_clear_search_click)
@@ -407,8 +429,12 @@ class WordListView:
     def on_show_all_click(self):
         """全て表示ボタンクリック時の処理"""
         self.controller.clear_category()
-
-    def on_search_change(self, *args):
+    def on_serach_change(self, *args):
+        
+        if self.after_id:
+            self.root.after_cancel(self.after_id)
+        self.after_id = self.root.after(300, self.apply_search)
+    def apply_search(self):
         """検索テキスト変更時の処理
         
         Args:
@@ -416,6 +442,16 @@ class WordListView:
         """
         query = self.search_var.get()
         self.controller.apply_search(query)
+
+    def on_search_enter(self, event):
+        """検索入力欄でEnterキー押下時の処理
+        
+        Args:
+            event: Enterキーイベント
+        """
+        query = self.search_var.get()
+        if query:
+            self.controller.apply_search(query)
 
     def on_clear_search_click(self):
         """検索クリアボタンクリック時の処理"""
@@ -458,6 +494,10 @@ class WordListView:
     def on_go_home_click(self):
         """Homeボタンクリック時の処理"""
         self.controller.go_to_home()
+
+    def on_go_quiz_click(self):
+        """問題を解くボタンクリック時の処理"""
+        self.controller.go_to_quiz()
 
     def on_go_wordentry_click(self):
         """単語登録ボタンクリック時の処理"""

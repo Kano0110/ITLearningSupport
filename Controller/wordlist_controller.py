@@ -311,6 +311,10 @@ class WordListController:
         """Home画面へ遷移"""
         self.app.switch_view("home")
 
+    def go_to_quiz(self):
+        """問題選択画面へ遷移"""
+        self.app.switch_view("qselect")
+
     def go_to_wordentry(self):
         """単語登録画面へ遷移"""
         self.app.switch_view("wordentry")

@@ -57,7 +57,7 @@ class Q_SelectView:
             bg='#4A90E2',
             fg='white'
         )
-        title_label.pack(pady=10)
+        title_label.pack(pady=5)
 
     def _create_multi_selectors(self):
         """タグ/カテゴリのチェックボックス群を作成（スクロール対応）"""
