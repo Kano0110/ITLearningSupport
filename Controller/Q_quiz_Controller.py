@@ -49,6 +49,11 @@ class Q_Quiz_Controller:
                 "correct": None
             })
 
+        if self.category is None:
+            self.category = detail.get("category")
+        if self.tag is None:
+            self.tag = detail.get("tag")
+
         self.current_index = 0
         self.correct_count = 0
         self._show_current_question()
