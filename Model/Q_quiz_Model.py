@@ -21,14 +21,20 @@ class Q_Quiz_Model:
             cur = conn.execute(query, params)
             return [row[0] for row in cur.fetchall()]
 
-    def get_term_detail(self, term_id):
-        """単語の詳細（名前・説明・タグ・カテゴリ）を取得"""
+    def get_term_detail(self, term_id_or_name):
         with get_conn(self.db_path) as conn:
-            cur = conn.execute("""
-                SELECT id, word_name, explain, tag, category
-                FROM terms
-                WHERE id = ?
-            """, (term_id,))
+            if isinstance(term_id_or_name, int) or str(term_id_or_name).isdigit():
+                cur = conn.execute("""
+                    SELECT id, word_name, explain, tag, category
+                    FROM terms
+                    WHERE id = ?
+                """, (int(term_id_or_name),))
+            else:
+                cur = conn.execute("""
+                    SELECT id, word_name, explain, tag, category
+                    FROM terms
+                    WHERE word_name = ?
+                """, (term_id_or_name,))
             row = cur.fetchone()
             if row:
                 return {
@@ -40,24 +46,50 @@ class Q_Quiz_Model:
                 }
             return {}
 
-    def get_distractors(self, correct_id, tag=None, category=None):
-        """誤答選択肢（同じタグまたはカテゴリから）を取得"""
+    def get_distractors(self, correct_id, tag=None, category=None, limit=3):
         with get_conn(self.db_path) as conn:
-            query = """
-                SELECT id, word_name, explain
-                FROM terms
-                WHERE id != ?
+            distractors = []
+
+            # 優先: 同タグ・同カテゴリ
+            base_sql = """
+                SELECT id, word_name, explain FROM terms
+                WHERE id != ? AND is_deleted = 0
             """
             params = [correct_id]
+
+            where_parts = []
             if tag:
-                query += " AND tag = ?"
+                where_parts.append("tag = ?")
                 params.append(tag)
-            elif category:
-                query += " AND category = ?"
+            if category is not None:
+                where_parts.append("category = ?")
                 params.append(category)
-            query += " ORDER BY RANDOM() LIMIT 10"
-            cur = conn.execute(query, params)
-            return [{"id": r[0], "name": r[1], "desc": r[2]} for r in cur.fetchall()]
+
+            sql = base_sql + (" AND " + " AND ".join(where_parts) if where_parts else "")
+            sql += " ORDER BY RANDOM() LIMIT ?"
+            params.append(limit)
+
+            cur = conn.execute(sql, params)
+            rows = cur.fetchall()
+            for r in rows:
+                distractors.append({"id": r[0], "name": r[1], "desc": r[2]})
+
+            # 足りなければ全体から補完
+            if len(distractors) < limit:
+                remain = limit - len(distractors)
+                cur = conn.execute("""
+                    SELECT id, word_name, explain FROM terms
+                    WHERE id != ? AND is_deleted = 0
+                    ORDER BY RANDOM() LIMIT ?
+                """, (correct_id, remain))
+                rows2 = cur.fetchall()
+                # 既に入ってるIDを除外
+                existing_ids = {d["id"] for d in distractors}
+                for r in rows2:
+                    if r[0] not in existing_ids:
+                        distractors.append({"id": r[0], "name": r[1], "desc": r[2]})
+
+            return distractors[:limit]
 
     def record_answer(self, terms_uuid, selected_option, total_questions,
                       retry_checkflag=0, answered_at=None):

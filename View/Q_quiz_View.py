@@ -7,33 +7,46 @@ class Q_Quiz_View(tk.Frame):
     def __init__(self, master, controller):
         super().__init__(master)
         self.controller = controller
-        self.pack(fill='both', expand=True)
+        self.grid(row=0, column=0, sticky="nsew")
+        self.columnconfigure(0, weight=1)
+        for i in range(10):
+            self.rowconfigure(i, weight=1)
 
+        # タイトル（上部中央）
         self.question_label = ttk.Label(self, text="", font=("TkDefaultFont", 12, "bold"))
-        self.question_label.pack(pady=(10, 4))
+        self.question_label.grid(row=0, column=0, columnspan=2, pady=(10, 4), sticky="n")
 
-        self.meta_label = ttk.Label(self, text="", foreground="gray")
-        self.meta_label.pack(pady=(0, 8))
+        # タグ・カテゴリ（右上）
+        self.meta_label = ttk.Label(self, text="", font=("TkDefaultFont", 10), anchor="e")
+        self.meta_label.grid(row=0, column=2, padx=(0, 10), sticky="ne")
 
-        self.display_area = ttk.Label(self, text="", wraplength=500, font=("TkDefaultFont", 11))
-        self.display_area.pack(pady=(4, 12))
+        # 問題文（中央）
+        self.display_area = ttk.Label(self, text="", font=("TkDefaultFont", 14, "bold"), wraplength=500)
+        self.display_area.grid(row=2, column=0, columnspan=3, pady=(10, 4), sticky="n")
 
+        # 隠された部分（中央下）
         self.hidden_area = ttk.Label(self, text="？？？", font=("TkDefaultFont", 12, "bold"), foreground="blue")
-        self.hidden_area.pack(pady=(0, 12))
+        self.hidden_area.grid(row=3, column=0, columnspan=3, pady=(0, 12), sticky="n")
 
+        # 選択肢（縦並び）
         self.choice_frame = ttk.Frame(self)
-        self.choice_frame.pack(pady=(4, 12))
+        self.choice_frame.grid(row=4, column=0, columnspan=3, pady=(4, 12))
 
+        # 結果表示
         self.result_label = ttk.Label(self, text="", font=("TkDefaultFont", 12))
-        self.result_label.pack(pady=(4, 8))
+        self.result_label.grid(row=5, column=0, columnspan=3, pady=(4, 8))
+
+        # 列幅を均等にする
+        for col in range(2):
+            self.columnconfigure(col, weight=1)
+
+        # ボタン配置
+        self.finish_btn = ttk.Button(self, text="回答を終了する", command=self.controller.finish_quiz)
+        self.finish_btn.grid(row=6, column=0, padx=12, pady=(4, 12), sticky="e")
 
         self.next_btn = ttk.Button(self, text="次の問題へ", command=self.controller.next_question)
-        self.next_btn.pack(side=tk.RIGHT, padx=12, pady=(4, 12))
-        self.next_btn.pack_forget()
+        self.next_btn.grid(row=6, column=2, padx=12, pady=(4, 12), sticky="w")
 
-        self.finish_btn = ttk.Button(self, text="回答を終了する", command=self.controller.finish_quiz)
-        self.finish_btn.pack(side=tk.LEFT, padx=12, pady=(4, 12))
-        self.finish_btn.pack_forget()
 
     def show(self):
         self.pack(fill='both', expand=True)
@@ -42,39 +55,39 @@ class Q_Quiz_View(tk.Frame):
         self.pack_forget()
 
     def display_question(self, index, total, term, choices, mode, tag=None, category=None):
-        """1問分の表示を行う"""
         self.clear_ui()
-
         self.question_label.config(text=f"{index}問目 / {total}問中")
-        meta = []
-        if category:
-            meta.append(f"カテゴリ：{category}")
-        if tag:
-            meta.append(f"タグ：{tag}")
-        self.meta_label.config(text=" / ".join(meta))
 
-        # 表示する部分と隠す部分を決定
+        meta_parts = []
+        if category:
+            meta_parts.append(f"カテゴリ: {category}")
+        if tag:
+            meta_parts.append(f"タグ: {tag}")
+        self.meta_label.config(text=" / ".join(meta_parts))
+
         if mode == "hide_word":
             self.display_area.config(text=term.get("desc", ""))
             self.hidden_area.config(text="？？？")
-        else:
+        elif mode == "hide_explanation":
             self.display_area.config(text=term.get("name", ""))
             self.hidden_area.config(text="？？？")
+        else:
+            self.display_area.config(text="（不明な出題形式）")
+            self.hidden_area.config(text="？？？")
 
-        # 選択肢ボタン生成
         labels = ["ア", "イ", "ウ", "エ"]
         for i, choice in enumerate(choices):
-            if mode == "hide_word":
-                text = choice.get("name", "")
-            else:
-                text = choice.get("desc", "")
+            text = choice.get("name") if mode == "hide_word" else choice.get("desc")
             btn = ttk.Button(self.choice_frame, text=f"{labels[i]}　{text}",
-                             command=lambda c=choice: self.controller.handle_answer(c))
+                            command=lambda c=choice: self.controller.handle_answer(c))
             btn.pack(anchor='w', pady=4, padx=12)
 
     def show_result(self, is_correct, correct_term):
         """回答後の正誤表示と隠された部分の表示"""
-        self.result_label.config(text="正解！" if is_correct else "残念…", foreground="green" if is_correct else "red")
+        self.result_label.config(
+            text="正解！" if is_correct else "残念…",
+            foreground="green" if is_correct else "red"
+        )
 
         # 隠されていた部分を表示
         if self.controller.mode == "hide_word":
@@ -86,9 +99,9 @@ class Q_Quiz_View(tk.Frame):
         for child in self.choice_frame.winfo_children():
             child.pack_forget()
 
-        # 次へ／終了ボタンを表示
-        self.next_btn.pack(side=tk.RIGHT, padx=12, pady=(4, 12))
-        self.finish_btn.pack(side=tk.LEFT, padx=12, pady=(4, 12))
+        # 次へ／終了ボタンを表示（← ループの外に出す）
+        self.next_btn.grid()
+        self.finish_btn.grid()
 
     def clear_ui(self):
         """前問のUIを初期化"""
@@ -96,5 +109,5 @@ class Q_Quiz_View(tk.Frame):
         self.hidden_area.config(text="？？？")
         for child in self.choice_frame.winfo_children():
             child.destroy()
-        self.next_btn.pack_forget()
-        self.finish_btn.pack_forget()
+        self.next_btn.grid_remove()
+        self.finish_btn.grid_remove()
