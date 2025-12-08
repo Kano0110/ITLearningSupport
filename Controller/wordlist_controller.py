@@ -1,5 +1,4 @@
 # Controller/wordlist_controller.py
-import tkinter as tk
 from typing import List, Optional, Callable
 from Model.wordlist_model import WordListModel
 
@@ -24,7 +23,7 @@ class WordListController:
         self.current_yomi_key: Optional[str] = None
         self.current_tag: Optional[str] = None
         self.current_search_query: str = ""
-        self.use_yomi_filter: bool = True
+        self.current_other: bool = False
         
         # ビュー管理
         self.view = None
@@ -89,6 +88,8 @@ class WordListController:
             status_parts.append(f"カテゴリ: {self.current_db_category}")
         if self.current_yomi_key:
             status_parts.append(f"50音: {self.current_yomi_key}")
+        if self.current_other:
+            status_parts.append("その他")
         if self.current_search_query:
             status_parts.append(f"検索: {self.current_search_query}")
         
@@ -113,53 +114,51 @@ class WordListController:
         return True
 
     # --- フィルタリング ---
-    def select_category(self, category: str):
-        """カテゴリ選択（互換性のため残す）
-        
-        Args:
-            category: カテゴリ名
-        """
-        self.current_category = category
-        self.current_search_query = ""
-        
-        if self.use_yomi_filter:
-            terms = self.model.get_terms_by_yomi(category)
-        else:
-            terms = self.model.get_terms_by_category(category)
-        
-        if not terms:
-            self._notify_view([], f"{category}行の用語はありません")
-        else:
-            self._notify_view(terms)
-
     def apply_search(self, query: str):
         self.current_search_query = query.strip()
-        if self.current_search_query:
-            terms = self.model.search_terms(self.current_search_query)
-            if not terms:
-                self._notify_view([], "該当する用語はありません")
-            else:
-                self._notify_view(terms)
-            return
-
-        if getattr(self, 'current_db_category', None):
-            self.select_category_db(self.current_db_category)
-            return
-        if getattr(self, 'current_yomi_key', None):
-            self.select_yomi(self.current_yomi_key)
-            return
-        if getattr(self, 'current_tag', None):
-            self.select_tag(self.current_tag)
-            return
-        if getattr(self, 'current_category', None):
-            self.select_category(self.current_category)
-            return
-
-        all_terms = self.model.get_all_terms()
-        self._notify_view(all_terms)
+        self._apply_filters()
 
     def clear_search(self):
         self.apply_search("")
+
+    # --- フィルタ適用ヘルパ ---
+    def _apply_filters(self):
+        """現在のフィルタ（タグ・カテゴリ・50音・検索・その他）をまとめて適用"""
+        base_terms = self.model.get_all_terms()
+        terms = set(base_terms)
+
+        has_filter = False
+
+        if self.current_db_category:
+            has_filter = True
+            terms &= set(self.model.get_terms_by_category(self.current_db_category))
+
+        if self.current_yomi_key:
+            has_filter = True
+            terms &= set(self.model.get_terms_by_yomi(self.current_yomi_key))
+
+        if self.current_tag:
+            has_filter = True
+            terms &= set(self.model.get_terms_by_tag(self.current_tag))
+
+        if self.current_other:
+            has_filter = True
+            terms = {t for t in terms if t and not self._is_japanese_char(t[0])}
+
+        if self.current_search_query:
+            has_filter = True
+            searched = set(self.model.search_terms(self.current_search_query))
+            terms &= searched
+
+        if not has_filter:
+            self._notify_view(base_terms)
+            return
+
+        result = sorted(list(terms))
+        if not result:
+            self._notify_view([], "該当する用語はありません")
+        else:
+            self._notify_view(result)
 
     # --- データ取得 ---
     def get_term_detail(self, word_name: str):
@@ -176,7 +175,7 @@ class WordListController:
     
     def get_available_categorys(self) -> List[str]:
         """利用可能なカテゴリ一覧を取得（別名）"""
-        return self.model.get_all_categorys()
+        return self.model.get_all_categories()
 
     def get_yomi_index(self) -> List[str]:
         """五十音インデックスを取得"""
@@ -192,18 +191,12 @@ class WordListController:
         Args:
             tag: タグ名
         """
-        self._clear_all_filters()
         self.current_tag = tag
-        
+        self.current_other = False
         if not tag:
             self._notify_view([], f"タグ '{tag}' の用語はありません")
             return
-        
-        terms = self.model.get_terms_by_tag(tag)
-        if not terms:
-            self._notify_view([], f"タグ '{tag}' の用語はありません")
-        else:
-            self._notify_view(terms)
+        self._apply_filters()
 
     def select_category_db(self, category: str):
         """DBカテゴリで絞り込み（他のフィルタをクリア）
@@ -211,14 +204,9 @@ class WordListController:
         Args:
             category: カテゴリ名
         """
-        self._clear_all_filters()
         self.current_db_category = category
-        
-        terms = self.model.get_terms_by_category(category)
-        if not terms:
-            self._notify_view([], f"カテゴリ '{category}' の用語はありません")
-        else:
-            self._notify_view(terms)
+        self.current_other = False
+        self._apply_filters()
 
     def select_yomi(self, yomi_key: str):
         """50音で絞り込み（他のフィルタをクリア）
@@ -228,12 +216,38 @@ class WordListController:
         """
         self._clear_all_filters()
         self.current_yomi_key = yomi_key
+        self._apply_filters()
+
+    def select_other(self):
+        """その他（日本語以外）で絞り込み（他のフィルタをクリア）"""
+        self._clear_all_filters()
+        self.current_other = True
+        self._apply_filters()
+
+    def _is_japanese_char(self, char: str) -> bool:
+        """文字が日本語かどうかを判定
         
-        terms = self.model.get_terms_by_yomi(yomi_key)
-        if not terms:
-            self._notify_view([], f"{yomi_key}行の用語はありません")
-        else:
-            self._notify_view(terms)
+        Args:
+            char: 判定対象の文字
+            
+        Returns:
+            日本語文字の場合True
+        """
+        # Unicode範囲で日本語文字を判定
+        code = ord(char)
+        # ひらがな: U+3040-U+309F
+        if 0x3040 <= code <= 0x309F:
+            return True
+        # カタカナ: U+30A0-U+30FF
+        if 0x30A0 <= code <= 0x30FF:
+            return True
+        # 漢字: U+4E00-U+9FFF
+        if 0x4E00 <= code <= 0x9FFF:
+            return True
+        # その他の日本語記号: U+3000-U+303F（最後のーなど）
+        if 0x3000 <= code <= 0x303F:
+            return True
+        return False
 
     def _clear_all_filters(self):
         """全てのフィルタ状態をクリア"""
@@ -241,6 +255,30 @@ class WordListController:
         self.current_yomi_key = None
         self.current_tag = None
         self.current_search_query = ""
+        self.current_other = False
+
+    def reset_filters_to_all(self):
+        """フィルタを初期化し、全件表示に戻す（入力UIもクリア）"""
+        self._clear_all_filters()
+        all_terms = self.model.get_all_terms()
+        # 入力UIリセット
+        if self.view is not None:
+            if hasattr(self.view, 'tag_var'):
+                try:
+                    self.view.tag_var.set("")
+                except Exception:
+                    pass
+            if hasattr(self.view, 'category_var'):
+                try:
+                    self.view.category_var.set("")
+                except Exception:
+                    pass
+            if hasattr(self.view, 'search_var'):
+                try:
+                    self.view.search_var.set("")
+                except Exception:
+                    pass
+        self._notify_view(all_terms)
 
     def clear_tag(self):
         """タグフィルタをクリア"""
@@ -256,28 +294,11 @@ class WordListController:
     def refresh_data(self):
         """データをリフレッシュして現在のフィルタを再適用"""
         self.model.get_all_terms(force_refresh=True)
-        
-        if self.current_search_query:
-            self.apply_search(self.current_search_query)
-        elif self.current_db_category:
-            self.select_category_db(self.current_db_category)
-        elif self.current_yomi_key:
-            self.select_yomi(self.current_yomi_key)
-        elif self.current_tag:
-            self.select_tag(self.current_tag)
-        else:
-            all_terms = self.model.get_all_terms()
-            self._notify_view(all_terms)
+        self._apply_filters()
 
     def is_ready(self) -> bool:
         """データベースが利用可能かチェック"""
         return self.model.is_db_available()
-
-    def toggle_filter_mode(self):
-        """フィルタモード（読み仮名/カテゴリ）を切り替え"""
-        self.use_yomi_filter = not self.use_yomi_filter
-        if hasattr(self, 'current_category') and self.current_category:
-            self.select_category(self.current_category)
 
     def show(self):
         try:
@@ -305,6 +326,7 @@ class WordListController:
     def hide(self):
         if hasattr(self.view, "hide"):
             self.view.hide()
+            
 
     # --- 画面遷移 ---
     def go_to_home(self):

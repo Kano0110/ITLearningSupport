@@ -27,6 +27,8 @@ class WordListView:
         """
         self.controller = controller
         self.root = root
+        # コントローラ側でUIリセットに使う参照を持たせる
+        self.controller.view = self
         # 画面全体をまとめるフレームを作る（表示/非表示はこの frame 単位で行う）
         self.frame = ttk.Frame(self.root, padding=0)
         # UI要素（frame 内に作る）
@@ -118,6 +120,16 @@ class WordListView:
                 style='Yomi.TButton'
             )
             btn.pack(side='left', padx=2)
+        
+        # その他ボタン
+        other_btn = ttk.Button(
+            center_index, 
+            text="他", 
+            width=4, 
+            command=self.on_other_click,
+            style='Yomi.TButton'
+        )
+        other_btn.pack(side='left', padx=2)
         
         # 全て表示ボタン
         all_btn = ttk.Button(
@@ -404,31 +416,21 @@ class WordListView:
     
     # ==================== イベントハンドラ ====================
 
-    def on_category_click(self, category: str):
-        """カテゴリボタンクリック時の処理（互換性維持用）
-        
-        Args:
-            category: カテゴリ名
-        """
-        if hasattr(self.controller, 'select_yomi'):
-            self.controller.select_yomi(category)
-        else:
-            self.controller.select_category_db(category)
-
     def on_yomi_click(self, yomi_key: str):
         """五十音インデックスクリック時の処理
         
         Args:
             yomi_key: 五十音キー（"あ"、"か"など）
         """
-        if hasattr(self.controller, 'select_yomi'):
-            self.controller.select_yomi(yomi_key)
-        else:
-            self.controller.select_category(yomi_key)
+        self.controller.select_yomi(yomi_key)
+
+    def on_other_click(self):
+        """その他ボタンクリック時の処理"""
+        self.controller.select_other()
 
     def on_show_all_click(self):
         """全て表示ボタンクリック時の処理"""
-        self.controller.clear_category()
+        self.controller.reset_filters_to_all()
     def on_serach_change(self, *args):
         
         if self.after_id:
@@ -481,10 +483,7 @@ class WordListView:
         """
         category = self.category_var.get()
         if category:
-            if hasattr(self.controller, 'select_category_db'):
-                self.controller.select_category_db(category)
-            else:
-                self.controller.select_category(category)
+            self.controller.select_category_db(category)
     
     def on_category_clear_click(self):
         """カテゴリフィルタクリア時の処理"""
