@@ -1,5 +1,6 @@
 # Controller/Q_SelectController.py
 from typing import List, Optional, Callable, Set
+from tkinter import messagebox
 from Model.Q_SelectModel import Q_SelectModel
 
 class Q_SelectController:
@@ -66,9 +67,19 @@ class Q_SelectController:
             初期化成功の可否
         """
         if not self.model.is_db_available():
-            print("Warning: Database not available")
+            messagebox.showerror(
+                "データベース未検出",
+                "word_master.db が見つかりません。\n"
+                "配置先の候補: プロジェクト直下 または Model/ 配下。"
+            )
             return False
         self.selected_terms = self.model.get_all_terms()
+        if not self.selected_terms:
+            messagebox.showwarning(
+                "データがありません",
+                "word_master.db の terms テーブルにデータがありません。\n"
+                "サンプルを入れるには insert_sample_data.py を実行してください。"
+            )
         self._notify_view_state()
         return True
 
@@ -140,6 +151,8 @@ class Q_SelectController:
 
     def _recompute_filtered_terms(self):
         """選択されたタグ・カテゴリに基づき用語を再計算"""
+        if not self.model.is_db_available():
+            return
         self.selected_terms = self.model.get_terms_by_filters(
             list(self.selected_tags), 
             list(self.selected_categories)
