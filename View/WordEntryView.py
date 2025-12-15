@@ -12,10 +12,13 @@ class WordEntryView:
         self.style = ttk.Style()
         # メインフレーム
         self.frame = ttk.Frame(self.root)
+
+        vcmd = (self.frame.register(self._validate_hiragana), "%P")
         
         # ウィジェット定義
-        self.entry_Name = tk.Text(self.frame, width=40, height=1)
-        self.entry_Yomi = tk.Text(self.frame, width=40, height=1)
+        self.entry_Name = ttk.Entry(self.frame, width=40)
+        self.entry_Yomi = ttk.Entry(self.frame, width=40, validate="key", validatecommand=vcmd)
+        
         self.entry_Kai = tk.Text(self.frame, width=40, height=10)
         
         # Combobox (state='normal' などの指定なし = デフォルトで入力も選択も可能)
@@ -49,6 +52,10 @@ class WordEntryView:
         ttk.Button(self.frame, text='リセット', style="My.TButton", command=lambda: self.controller.create_reset_window()).place(x=490, y=40)
         ttk.Button(self.frame, text='作成', command=lambda: self.controller.get_id_pass()).place(x=490, y=340)
 
+        self.entry_Name.bind("<Return>", lambda e: self.entry_Yomi.focus_set())
+        self.entry_Yomi.bind("<Return>", lambda e: self.entry_Kai.focus_set())
+        self.entry_Kai.bind("<Return>", lambda e: None)  # 最後は何もしない
+
     def show(self):
         """この View を表示する（controller.show から呼ばれる）。"""
         # AppControllerのサイズ(600x500)に合わせて fill する
@@ -64,11 +71,11 @@ class WordEntryView:
         self.cb_Tag['values'] = tags
 
     def get_name(self):
-        return self.entry_Name.get("1.0", "end-1c").strip() # end-1c で最後の改行を除く
+        return self.entry_Name.get().strip()
     
     def get_yomi(self):
-        return self.entry_Yomi.get("1.0", "end-1c").strip()
-
+        return self.entry_Name.get().strip()
+    
     def get_explain(self):
         return self.entry_Kai.get("1.0", "end-1c").strip()
 
@@ -77,6 +84,13 @@ class WordEntryView:
 
     def get_tag(self):
         return self.cb_Tag.get().strip()
+    
+    def _validate_hiragana(self, P):
+        # P = 入力後の文字列
+        if P == "":
+            return True
+        import re
+        return bool(re.fullmatch(r"[ぁ-ゖー]*", P))
 
     def clear_inputs(self):
         """入力欄をクリアする（リセット処理）。"""
