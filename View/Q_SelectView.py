@@ -57,7 +57,7 @@ class Q_SelectView:
             bg='#4A90E2',
             fg='white'
         )
-        title_label.pack(pady=10)
+        title_label.pack(pady=5)
 
     def _create_multi_selectors(self):
         """タグ/カテゴリのチェックボックス群を作成（スクロール対応）"""
@@ -196,33 +196,32 @@ class Q_SelectView:
         # コンテナにスクロールイベントをバインド
         self._bind_scroll_events(container, canvas)
         
-        # チェックボックスを横並びで配置（文字数で改行）
+        # チェックボックスを横並びで配置（1行6個まで）
         row_frame = self._create_checkbox_row(container, canvas)
-        current_row_width = 0
-        max_row_width = 70  # 1行あたりの最大文字数
+        col_count = 0
+        max_cols_per_row = 6
         
         for item in items:
-            var = vars_dict.get(item) or tk.BooleanVar(value=False)
-            vars_dict[item] = var
+            item_str = str(item)
+            var = vars_dict.get(item_str) or tk.BooleanVar(value=False)
+            vars_dict[item_str] = var
             
-            # チェックボックスの幅を計算（テキスト長 + マージン）
-            item_width = len(item) + 4
-            
-            # 現在の行に追加すると最大幅を超える場合は改行
-            if current_row_width > 0 and current_row_width + item_width > max_row_width:
-                row_frame = self._create_checkbox_row(container, canvas)
-                current_row_width = 0
+            # 10文字以上の場合は省略表示
+            display_text = item_str if len(item_str) < 10 else item_str[:9] + '…'
             
             cb = ttk.Checkbutton(
                 row_frame, 
-                text=item, 
+                text=display_text, 
                 variable=var, 
-                command=lambda i=item: toggle_callback(i)
+                command=lambda i=item_str: toggle_callback(i)
             )
             cb.pack(side='left', padx=4, pady=2)
             self._bind_scroll_events(cb, canvas)
             
-            current_row_width += item_width
+            col_count += 1
+            if col_count >= max_cols_per_row:
+                row_frame = self._create_checkbox_row(container, canvas)
+                col_count = 0
 
     def _create_checkbox_row(self, parent: ttk.Frame, canvas: tk.Canvas) -> ttk.Frame:
         """チェックボックス配置用の行フレームを作成

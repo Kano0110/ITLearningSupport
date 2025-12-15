@@ -27,6 +27,8 @@ class WordListView:
         """
         self.controller = controller
         self.root = root
+        # コントローラ側でUIリセットに使う参照を持たせる
+        self.controller.view = self
         # 画面全体をまとめるフレームを作る（表示/非表示はこの frame 単位で行う）
         self.frame = ttk.Frame(self.root, padding=0)
         # UI要素（frame 内に作る）
@@ -51,29 +53,47 @@ class WordListView:
     def _create_navigation_buttons(self):
         """ナビゲーションボタン（Home、WordEntry）を作成"""
         nav_frame = tk.Frame(self.frame, bg='#2C3E50')
-        nav_frame.pack(fill='x', ipady=10)
+        nav_frame.pack(fill='x', ipady=5, padx=40, pady=(20, 0))
         
-        center_nav = ttk.Frame(nav_frame)
-        center_nav.pack(expand=True)
+        # タイトルラベル（中央配置）
+        title_label = tk.Label(
+            nav_frame,
+            text="単語一覧",
+            bg='#2C3E50',
+            fg='white',
+            font=('Arial', 14, 'bold')
+        )
+        title_label.pack(anchor='center', pady=(0, 0))
+        
+        # ナビゲーションボタン（色枠の外に配置）
+        button_frame = tk.Frame(self.frame)
+        button_frame.pack(fill='x', pady=20)
+        
+        # ボタンを中央に配置するためのサブフレーム
+        center_buttons = ttk.Frame(button_frame)
+        center_buttons.pack(expand=True)
         
         # スタイル設定
         style = ttk.Style()
-        style.configure('Home.TButton', foreground='#3498DB')
-        style.configure('Entry.TButton', foreground='#27AE60')
+        style.configure('Home.TButton', foreground="#1523E6")
+        style.configure('Quiz.TButton', foreground="#E67E22")
+        style.configure('Entry.TButton', foreground="#099945")
+        
         
         buttons = [
-            ("← Home", self.on_go_home_click, 'Home.TButton'),
-            ("単語登録 →", self.on_go_wordentry_click, 'Entry.TButton')
+            ("Home", self.on_go_home_click, 'Home.TButton'),
+            ("問題を解く", self.on_go_quiz_click, 'Quiz.TButton'),
+            ("単語登録", self.on_go_wordentry_click, 'Entry.TButton')
         ]
         
         for text, command, style_name in buttons:
-            btn = ttk.Button(center_nav, text=text, command=command, style=style_name)
+            btn = ttk.Button(center_buttons, text=text, command=command, style=style_name)
             btn.pack(side='left', padx=5)
 
     def _create_index_buttons(self):
         """五十音インデックスボタンを作成"""
         index_frame = tk.Frame(self.frame, bg='#ECF0F1')
-        index_frame.pack(fill='x', ipady=8)
+        index_frame.pack(fill='x', ipady=12)
         
         center_index = ttk.Frame(index_frame)
         center_index.pack(expand=True)
@@ -101,6 +121,16 @@ class WordListView:
             )
             btn.pack(side='left', padx=2)
         
+        # その他ボタン
+        other_btn = ttk.Button(
+            center_index, 
+            text="他", 
+            width=4, 
+            command=self.on_other_click,
+            style='Yomi.TButton'
+        )
+        other_btn.pack(side='left', padx=2)
+        
         # 全て表示ボタン
         all_btn = ttk.Button(
             center_index, 
@@ -113,7 +143,7 @@ class WordListView:
 
     def _create_filter_selectors(self):
         """タグとカテゴリのフィルタセレクタを作成"""
-        filter_frame = ttk.Frame(self.frame, padding=(8, 3))
+        filter_frame = ttk.Frame(self.frame, padding=(10, 6))
         filter_frame.pack(fill='x')
         
         center_filter = ttk.Frame(filter_frame)
@@ -203,9 +233,8 @@ class WordListView:
 
     def _create_search_bar(self):
         """検索バーと統計情報を作成"""
-        search_frame = ttk.Frame(self.frame, padding=(8, 4))
+        search_frame = ttk.Frame(self.frame, padding=(10, 6))
         search_frame.pack(fill='x')
-        
         center_search = ttk.Frame(search_frame)
         center_search.pack(expand=True)
         
@@ -216,7 +245,12 @@ class WordListView:
         self.search_var = tk.StringVar()
         search_entry = ttk.Entry(center_search, textvariable=self.search_var, width=30)
         search_entry.pack(side='left', padx=(4, 4))
-        self.search_var.trace_add('write', self.on_search_change)
+
+        search_entry.bind('<KeyRelease>',  self.on_serach_change)
+        self.after_id = None
+        #self.search_var.trace_add('write', self.on_search_change)
+        # Enterキーバインド
+        #search_entry.bind('<Return>', self.on_search_enter)
         
         # クリアボタン
         clear_btn = ttk.Button(center_search, text="クリア", command=self.on_clear_search_click)
@@ -234,7 +268,7 @@ class WordListView:
 
     def _create_list_area(self):
         """スクロール可能な用語リスト表示エリアを作成"""
-        list_frame = ttk.Frame(self.frame, padding=8)
+        list_frame = ttk.Frame(self.frame, padding=(15, 5, 15, 8))
         list_frame.pack(expand=True, fill='both')
 
         # キャンバスとスクロールバー
@@ -327,25 +361,29 @@ class WordListView:
             col_index = i % NUM_COLUMNS
             row_index = i // NUM_COLUMNS
             
+            # 12文字以上の場合は省略表示
+            display_text = name if len(name) < 12 else name[:11] + '…'
+            
             lbl = ttk.Label(
                 self.scrollable_frame,
-                text=name,
-                padding=(7, 5),
+                text=display_text,
+                padding=(2, 4),
                 cursor='hand2',
                 anchor='center',
-                justify='center'
+                justify='center',
+                width=15  # 固定幅を設定して均等に保つ
             )
-            lbl.grid(row=row_index, column=col_index, sticky='ew', padx=5, pady=2)
+            lbl.grid(row=row_index, column=col_index, sticky='ew', padx=3, pady=2)
             
             # イベントバインド
             lbl.bind('<Button-1>', lambda e, term=name: self.on_term_click(term))
-            lbl.bind('<Enter>', lambda e, l=lbl: l.configure(foreground="#DB6D13"))
+            lbl.bind('<Enter>', lambda e, l=lbl: l.configure(foreground='#E67E22'))
             lbl.bind('<Leave>', lambda e, l=lbl: l.configure(foreground='black'))
             self._bind_mousewheel_events(lbl)
 
-        # 各列を均等に広げる
+        # 各列を均等に広げる（同じ重みを設定）
         for col in range(NUM_COLUMNS):
-            self.scrollable_frame.columnconfigure(col, weight=1)
+            self.scrollable_frame.columnconfigure(col, weight=1, uniform='equal')
     
     def _display_empty_message(self, message: str = None):
         """用語がない場合のメッセージを表示
@@ -378,33 +416,27 @@ class WordListView:
     
     # ==================== イベントハンドラ ====================
 
-    def on_category_click(self, category: str):
-        """カテゴリボタンクリック時の処理（互換性維持用）
-        
-        Args:
-            category: カテゴリ名
-        """
-        if hasattr(self.controller, 'select_yomi'):
-            self.controller.select_yomi(category)
-        else:
-            self.controller.select_category_db(category)
-
     def on_yomi_click(self, yomi_key: str):
         """五十音インデックスクリック時の処理
         
         Args:
             yomi_key: 五十音キー（"あ"、"か"など）
         """
-        if hasattr(self.controller, 'select_yomi'):
-            self.controller.select_yomi(yomi_key)
-        else:
-            self.controller.select_category(yomi_key)
+        self.controller.select_yomi(yomi_key)
+
+    def on_other_click(self):
+        """その他ボタンクリック時の処理"""
+        self.controller.select_other()
 
     def on_show_all_click(self):
         """全て表示ボタンクリック時の処理"""
-        self.controller.clear_category()
-
-    def on_search_change(self, *args):
+        self.controller.reset_filters_to_all()
+    def on_serach_change(self, *args):
+        
+        if self.after_id:
+            self.root.after_cancel(self.after_id)
+        self.after_id = self.root.after(300, self.apply_search)
+    def apply_search(self):
         """検索テキスト変更時の処理
         
         Args:
@@ -412,6 +444,16 @@ class WordListView:
         """
         query = self.search_var.get()
         self.controller.apply_search(query)
+
+    def on_search_enter(self, event):
+        """検索入力欄でEnterキー押下時の処理
+        
+        Args:
+            event: Enterキーイベント
+        """
+        query = self.search_var.get()
+        if query:
+            self.controller.apply_search(query)
 
     def on_clear_search_click(self):
         """検索クリアボタンクリック時の処理"""
@@ -441,10 +483,7 @@ class WordListView:
         """
         category = self.category_var.get()
         if category:
-            if hasattr(self.controller, 'select_category_db'):
-                self.controller.select_category_db(category)
-            else:
-                self.controller.select_category(category)
+            self.controller.select_category_db(category)
     
     def on_category_clear_click(self):
         """カテゴリフィルタクリア時の処理"""
@@ -454,6 +493,10 @@ class WordListView:
     def on_go_home_click(self):
         """Homeボタンクリック時の処理"""
         self.controller.go_to_home()
+
+    def on_go_quiz_click(self):
+        """問題を解くボタンクリック時の処理"""
+        self.controller.go_to_quiz()
 
     def on_go_wordentry_click(self):
         """単語登録ボタンクリック時の処理"""
