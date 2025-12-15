@@ -57,7 +57,7 @@ class Q_SelectView:
             bg='#4A90E2',
             fg='white'
         )
-        title_label.pack(pady=10)
+        title_label.pack(pady=5)
 
     def _create_multi_selectors(self):
         """タグ/カテゴリのチェックボックス群を作成（スクロール対応）"""
@@ -202,17 +202,18 @@ class Q_SelectView:
         max_cols_per_row = 6
         
         for item in items:
-            var = vars_dict.get(item) or tk.BooleanVar(value=False)
-            vars_dict[item] = var
+            item_str = str(item)
+            var = vars_dict.get(item_str) or tk.BooleanVar(value=False)
+            vars_dict[item_str] = var
             
             # 10文字以上の場合は省略表示
-            display_text = item if len(item) < 10 else item[:9] + '…'
+            display_text = item_str if len(item_str) < 10 else item_str[:9] + '…'
             
             cb = ttk.Checkbutton(
                 row_frame, 
                 text=display_text, 
                 variable=var, 
-                command=lambda i=item: toggle_callback(i)
+                command=lambda i=item_str: toggle_callback(i)
             )
             cb.pack(side='left', padx=4, pady=2)
             self._bind_scroll_events(cb, canvas)
