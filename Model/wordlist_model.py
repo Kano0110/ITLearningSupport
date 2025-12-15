@@ -182,8 +182,8 @@ class WordListModel(BaseModel):
 
     # --- ヘルパーメソッド ---
     def get_categories(self) -> List[str]:
-        """利用可能なカテゴリ一覧を取得（エイリアス）"""
-        return self.get_all_categorys()
+        """利用可能なカテゴリ一覧を取得"""
+        return self.get_all_categories()
 
     def get_yomi_keys(self) -> List[str]:
         """五十音インデックス（YOMI_MAPのキー）を取得
@@ -212,12 +212,8 @@ class WordListModel(BaseModel):
         """
         return self._get_terms_by_filter('tag', tag)
 
-    def get_all_categorys(self) -> List[str]:
-        """データベースから全カテゴリを取得
-        
-        Returns:
-            カテゴリ名のリスト（アルファベット順）
-        """
+    def get_all_categories(self) -> List[str]:
+        """データベースから全カテゴリを取得"""
         return self._get_distinct_values('category')
 
     def _get_distinct_values(self, column: str) -> List[str]:
