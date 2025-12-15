@@ -9,6 +9,12 @@ class AppController:
         self.current_controller = None
         self.db_path = db_path
 
+        # 直前のビュー名を保持（Wordbook→Wordlistのときだけフィルタを維持する）
+        self._last_view_name = None
+
+        # コントローラーのキャッシュ（フィルタ状態などを保持するため再利用）
+        self._controller_cache = {}
+
         # モデルの遅延初期化用の参照を保持（必要になったら生成）
         self._models = {}
 
@@ -112,8 +118,14 @@ class AppController:
             print(f"Error: View '{view_name}' currently has no factory (not implemented).")
             return
 
+        is_new_instance = False
         try:
-            next_controller = factory()
+            if view_name in self._controller_cache:
+                next_controller = self._controller_cache[view_name]
+            else:
+                next_controller = factory()
+                self._controller_cache[view_name] = next_controller
+                is_new_instance = True
         except Exception as e:
             print(f"Error: Failed to create controller for '{view_name}': {e}")
             traceback.print_exc()
@@ -126,6 +138,15 @@ class AppController:
                 pass
 
         self.current_controller = next_controller
+
+        # Wordlistに戻るとき、直前がWordbook以外ならフィルタをリセット
+        if view_name == "wordlist" and self._last_view_name != "wordbook":
+            if hasattr(self.current_controller, "reset_filters_to_all"):
+                try:
+                    self.current_controller.reset_filters_to_all()
+                except Exception as e:
+                    print(f"Warning: reset_filters_to_all failed: {e}")
+
         try:
             self.current_controller.show()
         except Exception as e:
@@ -151,8 +172,13 @@ class AppController:
 
         # Wordlistへの遷移時の処理
         if view_name == "wordlist":
-            if hasattr(self.current_controller, "initialize"):
+            if is_new_instance and hasattr(self.current_controller, "initialize"):
                 self.current_controller.initialize()
+            elif hasattr(self.current_controller, "refresh_data"):
+                self.current_controller.refresh_data()
+
+        # 現在のビュー名を保存（次回判定用）
+        self._last_view_name = view_name
 
     def open_wordbook(self, word_name: str):
         """wordbook 画面へ遷移し、遷移先コントローラに選択語を渡して表示させるヘルパ。"""
