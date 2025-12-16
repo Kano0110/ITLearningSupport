@@ -13,8 +13,8 @@ class ResultView:
         # ラベル保持用
         self.labelCorrect = None
         self.labelPercent = None
-        self.labelCategoryName = None
-        self.labelTagName = None
+        self.listCategoryName = None
+        self.listTagName = None
         self.listboxWrong = None
         self.labelTime = None
  
@@ -45,28 +45,28 @@ class ResultView:
         labelframe.place(x=60, y=160)
  
         ttk.Label(labelframe, text='カテゴリ：').grid(row=0, column=0, padx=10, pady=5)
-        self.labelCategoryName = tk.Label(labelframe, text="", bg="#ffffff")
-        self.labelCategoryName.grid(row=0, column=1, padx=10, pady=5)
+        self.listCategoryName = tk.Listbox(labelframe)
+        self.listCategoryName.grid(row=1, column=1, padx=10, pady=5)
  
-        ttk.Label(labelframe, text='タグ：').grid(row=1, column=0, padx=10, pady=5)
-        self.labelTagName = tk.Label(labelframe, text="", bg="#ffffff")
-        self.labelTagName.grid(row=1, column=1, padx=10, pady=5)
+        ttk.Label(labelframe, text='タグ：').grid(row=0, column=1, padx=10, pady=5)
+        self.listTagName = tk.Listbox(labelframe)
+        self.listTagName.grid(row=1, column=0, padx=10, pady=5)
  
         # ボタン
         button_list = ttk.Button(self.frame, text='単語一覧に戻る', command=self.controller.return_wordlist)
         button_question = ttk.Button(self.frame, text='出題形式選択へ戻る', command=self.controller.return_qselect)
         button_again = ttk.Button(self.frame, text='同じ条件でもう一度解く', command=self.controller.redo_quiz)
- #root
-        button_list.place(x=70, y=300)
-        button_question.place(x=70, y=350)
-        button_again.place(x=400, y=350)
+
+        button_list.place(x=70, y=430)
+        button_question.place(x=200, y=430)
+        button_again.place(x=400, y=430)
  
         # 間違えた問題リスト
         labelWrong = ttk.Label(self.frame, text="間違えた問題", font=Wrong_font)
-        labelWrong.place(x=380, y=100)
+        labelWrong.place(x=380, y=160)
  
         self.listboxWrong = tk.Listbox(self.scrollbar_frame)
-        self.scrollbar_frame.place(x=380, y=120)
+        self.scrollbar_frame.place(x=380, y=180)
         self.listboxWrong.pack(side=tk.LEFT)
  
         scroll_bar = tk.Scrollbar(self.scrollbar_frame, command=self.listboxWrong.yview)
@@ -74,20 +74,35 @@ class ResultView:
         self.listboxWrong.config(yscrollcommand=scroll_bar.set)
  
     def set_result(self, correct_count, total_questions, percent, category, tag, wronged):
+        
         """Controllerから結果を受け取り、UIに反映"""
         self.labelCorrect.config(text=f"{total_questions}問中、{correct_count}問正解！")
         self.labelPercent.config(text=f"正解率：{percent}%")
  
-        self.labelCategoryName.config(text=category if category else "N/A")
-        self.labelTagName.config(text=tag if tag else "N/A")
+        # カテゴリ
+        self.listCategoryName.delete(0, tk.END)
+        if category:
+            for c in category:
+                self.listCategoryName.insert(tk.END, c)
+        else:
+            self.listCategoryName.insert(tk.END, "N/A")
+
+        # タグ
+        self.listTagName.delete(0, tk.END)
+        if tag:
+            for t in tag:
+                self.listTagName.insert(tk.END, t)
+        else:
+            self.listTagName.insert(tk.END, "N/A")
  
         # 間違えた問題リスト更新
         self.listboxWrong.delete(0, tk.END)
         if wronged:
             for item in wronged:
                 self.listboxWrong.insert(tk.END, item)
+        
+        
 
-        #self.labelTime = ttk.Label(text="経過時間："+ CorrectMinute+"分"+ CorrectSecond + "秒",font=Correct_font) 
  
     def show(self):
         self.frame.pack(expand=True, fill='both')
