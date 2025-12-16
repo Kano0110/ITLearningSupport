@@ -25,32 +25,50 @@ class WordEntryView:
         self.cb_Category = ttk.Combobox(self.frame, values=[], width=17)
         self.cb_Tag = ttk.Combobox(self.frame, values=[], width=17)
         
+        # タイトルフレーム
+        self.title_frame = tk.Frame(self.frame)
+        
         self._build_ui()
 
     def _build_ui(self):
-        # self.root.title("単語登録") # AppController側で制御するため削除しても良いが残しておく
+        # スタイル設定
+        self.style.configure("Reset.TButton", foreground="#E4342E")
+        self.style.configure("Create.TButton", foreground="#099945")
+        self.style.configure("Back.TButton", foreground="#1523E6")
 
-        self.style.configure("My.TButton", foreground="#ff0000")
+        # タイトルフレーム（単語一覧と同じスタイル）
+        title_frame = tk.Frame(self.frame, bg="#F69713")
+        title_frame.pack(fill='x', ipady=5, padx=40, pady=(20, 0))
+        
+        title_label = tk.Label(
+            title_frame,
+            text="単語登録",
+            font=('Arial', 18, 'bold'),
+            bg='#F69713',
+            fg='white'
+        )
+        title_label.pack(anchor='center', padx=40)
 
         # place を使用したレイアウト (ウィンドウサイズ固定前提)
-        ttk.Label(self.frame, text='単語名：').place(x=60, y=30)
-        self.entry_Name.place(x=150, y=30)
+        # タイトルフレーム分（約50px）下げる
+        ttk.Label(self.frame, text='単語名：').place(x=60, y=80)
+        self.entry_Name.place(x=150, y=80)
 
-        ttk.Label(self.frame, text='ふりがな：').place(x=59, y=60)
-        self.entry_Yomi.place(x=150, y=60)
+        ttk.Label(self.frame, text='ふりがな：').place(x=59, y=110)
+        self.entry_Yomi.place(x=150, y=110)
 
-        ttk.Label(self.frame, text='解説：').place(x=65, y=120)
-        self.entry_Kai.place(x=150, y=90)
+        ttk.Label(self.frame, text='解説：').place(x=65, y=170)
+        self.entry_Kai.place(x=150, y=140)
         
-        ttk.Label(self.frame, text='カテゴリ').place(x=70, y=260)
-        self.cb_Category.place(x=120, y=260)
+        ttk.Label(self.frame, text='カテゴリ').place(x=70, y=310)
+        self.cb_Category.place(x=120, y=310)
         
-        ttk.Label(self.frame, text='タグ').place(x=315, y=260)
-        self.cb_Tag.place(x=350, y=260)
+        ttk.Label(self.frame, text='タグ').place(x=315, y=310)
+        self.cb_Tag.place(x=350, y=310)
         
-        ttk.Button(self.frame, text='単語一覧に戻る', command=lambda: self.controller.create_close_window()).place(x=40, y=340)
-        ttk.Button(self.frame, text='リセット', style="My.TButton", command=lambda: self.controller.create_reset_window()).place(x=490, y=40)
-        ttk.Button(self.frame, text='作成', command=lambda: self.controller.get_id_pass()).place(x=490, y=340)
+        ttk.Button(self.frame, text='単語一覧に戻る', command=lambda: self.controller.create_close_window(), style="Back.TButton").place(x=40, y=390)
+        ttk.Button(self.frame, text='リセット', style="Reset.TButton", command=lambda: self.controller.create_reset_window()).place(x=490, y=90)
+        ttk.Button(self.frame, text='作成', style="Create.TButton", command=lambda: self.controller.get_id_pass()).place(x=490, y=390)
 
         self.entry_Name.bind("<Return>", lambda e: self.entry_Yomi.focus_set())
         self.entry_Yomi.bind("<Return>", lambda e: self.entry_Kai.focus_set())
@@ -74,7 +92,7 @@ class WordEntryView:
         return self.entry_Name.get().strip()
     
     def get_yomi(self):
-        return self.entry_Name.get().strip()
+        return self.entry_Yomi.get().strip()
     
     def get_explain(self):
         return self.entry_Kai.get("1.0", "end-1c").strip()
@@ -94,8 +112,10 @@ class WordEntryView:
 
     def clear_inputs(self):
         """入力欄をクリアする（リセット処理）。"""
-        self.entry_Name.delete("1.0", tk.END)
-        self.entry_Yomi.delete("1.0", tk.END)
+        # ttk.Entry は .delete(0, tk.END) を使う
+        self.entry_Name.delete(0, tk.END)
+        self.entry_Yomi.delete(0, tk.END)
+        # tk.Text は .delete("1.0", tk.END) を使う
         self.entry_Kai.delete("1.0", tk.END)
         self.cb_Category.set("")
         self.cb_Tag.set("")

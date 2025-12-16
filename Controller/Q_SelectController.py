@@ -24,6 +24,7 @@ class Q_SelectController:
         # ビューと更新コールバック
         self.view: Optional[object] = None
         self.view_update_callback: Optional[Callable] = None
+        self._update_after_id: Optional[str] = None  # 連続操作のデバウンスID
         
     # --- 初期化・ビュー管理 ---
     def _ensure_view(self):
@@ -150,14 +151,32 @@ class Q_SelectController:
         self._notify_view_state()
 
     def _recompute_filtered_terms(self):
-        """選択されたタグ・カテゴリに基づき用語を再計算"""
+        """選択されたタグ・カテゴリに基づき用語を再計算（デバウンス付き）"""
         if not self.model.is_db_available():
             return
-        self.selected_terms = self.model.get_terms_by_filters(
-            list(self.selected_tags), 
-            list(self.selected_categories)
-        )
-        self._notify_view_state()
+        # 直前の予約更新があればキャンセル
+        if self._update_after_id is not None and self.app and hasattr(self.app, 'root'):
+            try:
+                self.app.root.after_cancel(self._update_after_id)
+            except Exception:
+                pass
+            self._update_after_id = None
+        # デバウンスしてDBアクセスを間引く
+        def _do_update():
+            self._update_after_id = None
+            try:
+                self.selected_terms = self.model.get_terms_by_filters(
+                    list(self.selected_tags), 
+                    list(self.selected_categories)
+                )
+            except Exception:
+                # 失敗時は空にして通知のみ
+                self.selected_terms = []
+            self._notify_view_state()
+        if self.app and hasattr(self.app, 'root'):
+            self._update_after_id = self.app.root.after(80, _do_update)
+        else:
+            _do_update()
 
     # --- 画面遷移 ---
     def start_quiz_hide_words(self):
@@ -166,6 +185,13 @@ class Q_SelectController:
             print("Error: No terms selected")
             return
         try:
+            # 保留中の更新があればクリーンアップ
+            if self._update_after_id is not None and hasattr(self.app, 'root'):
+                try:
+                    self.app.root.after_cancel(self._update_after_id)
+                except Exception:
+                    pass
+                self._update_after_id = None
             self.app.start_quiz(self.selected_terms, mode='hide_word')
         except Exception as e:
             print(f"Error: Failed to start hide_word quiz: {e}")
@@ -176,6 +202,12 @@ class Q_SelectController:
             print("Error: No terms selected")
             return
         try:
+            if self._update_after_id is not None and hasattr(self.app, 'root'):
+                try:
+                    self.app.root.after_cancel(self._update_after_id)
+                except Exception:
+                    pass
+                self._update_after_id = None
             self.app.start_quiz(self.selected_terms, mode='hide_explanation')
         except Exception as e:
             print(f"Error: Failed to start hide_explanation quiz: {e}")
@@ -183,6 +215,13 @@ class Q_SelectController:
     def go_to_home(self):
         """Home画面へ遷移"""
         try:
+            # ナビゲーション前に保留更新をキャンセル
+            if self._update_after_id is not None and hasattr(self.app, 'root'):
+                try:
+                    self.app.root.after_cancel(self._update_after_id)
+                except Exception:
+                    pass
+                self._update_after_id = None
             self.app.switch_view("home")
         except Exception as e:
             print(f"Error: Failed to switch to home: {e}")
@@ -194,11 +233,29 @@ class Q_SelectController:
             self._ensure_view()
         except Exception as e:
             print(f"Warning: show failed to ensure view: {e}")
+        # 画面表示時にデータを最新化（単語登録で新しい単語が追加されている可能性）
+        try:
+            self._refresh_data_on_show()
+        except Exception as e:
+            print(f"Warning: _refresh_data_on_show failed: {e}")
         if self.view and hasattr(self.view, "show"):
             try:
                 self.view.show()
             except Exception as e:
                 print(f"Warning: view.show() failed: {e}")
+
+    def _refresh_data_on_show(self):
+        """画面表示時にデータを最新化"""
+        # 用語リストを強制リロード
+        self.selected_terms = self.model.get_all_terms()
+        # タグ・カテゴリも再取得（新規追加される可能性）
+        if self.view and hasattr(self.view, 'refresh_tag_category_options'):
+            try:
+                self.view.refresh_tag_category_options()
+            except Exception as e:
+                print(f"Warning: refresh_tag_category_options failed: {e}")
+        # フィルタを再適用
+        self._notify_view_state()
 
     def hide(self):
         """非表示処理（AppControllerから呼ばれる）"""
@@ -207,3 +264,10 @@ class Q_SelectController:
                 self.view.hide()
             except Exception as e:
                 print(f"Warning: view.hide() failed: {e}")
+        # 画面非表示時に保留更新があればキャンセル
+        if self._update_after_id is not None and hasattr(self.app, 'root'):
+            try:
+                self.app.root.after_cancel(self._update_after_id)
+            except Exception:
+                pass
+            self._update_after_id = None
