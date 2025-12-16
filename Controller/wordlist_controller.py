@@ -29,6 +29,7 @@ class WordListController:
         self.view = None
         self.view_update_callback: Optional[Callable] = None
         self._last_terms: List[str] = []
+        self._apply_after_id: Optional[str] = None  # フィルタ適用のデバウンスID
 
     # --- 初期化・ビュー管理 ---
     def _ensure_view(self):
@@ -116,7 +117,7 @@ class WordListController:
     # --- フィルタリング ---
     def apply_search(self, query: str):
         self.current_search_query = query.strip()
-        self._apply_filters()
+        self._schedule_apply_filters()
 
     def clear_search(self):
         self.apply_search("")
@@ -160,6 +161,25 @@ class WordListController:
         else:
             self._notify_view(result)
 
+    def _schedule_apply_filters(self, delay_ms: int = 80):
+        """フィルタ適用をデバウンスしてスケジュール"""
+        if self._apply_after_id is not None and hasattr(self.app, 'root'):
+            try:
+                self.app.root.after_cancel(self._apply_after_id)
+            except Exception:
+                pass
+            self._apply_after_id = None
+        def _do_apply():
+            self._apply_after_id = None
+            try:
+                self._apply_filters()
+            except Exception as e:
+                print(f"Warning: _apply_filters failed: {e}")
+        if hasattr(self.app, 'root'):
+            self._apply_after_id = self.app.root.after(delay_ms, _do_apply)
+        else:
+            _do_apply()
+
     # --- データ取得 ---
     def get_term_detail(self, word_name: str):
         """用語の詳細情報を取得"""
@@ -196,7 +216,7 @@ class WordListController:
         if not tag:
             self._notify_view([], f"タグ '{tag}' の用語はありません")
             return
-        self._apply_filters()
+        self._schedule_apply_filters()
 
     def select_category_db(self, category: str):
         """DBカテゴリで絞り込み（他のフィルタをクリア）
@@ -206,7 +226,7 @@ class WordListController:
         """
         self.current_db_category = category
         self.current_other = False
-        self._apply_filters()
+        self._schedule_apply_filters()
 
     def select_yomi(self, yomi_key: str):
         """50音で絞り込み（他のフィルタをクリア）
@@ -216,13 +236,13 @@ class WordListController:
         """
         self._clear_all_filters()
         self.current_yomi_key = yomi_key
-        self._apply_filters()
+        self._schedule_apply_filters()
 
     def select_other(self):
         """その他（日本語以外）で絞り込み（他のフィルタをクリア）"""
         self._clear_all_filters()
         self.current_other = True
-        self._apply_filters()
+        self._schedule_apply_filters()
 
     def _is_japanese_char(self, char: str) -> bool:
         """文字が日本語かどうかを判定
@@ -294,7 +314,7 @@ class WordListController:
     def refresh_data(self):
         """データをリフレッシュして現在のフィルタを再適用"""
         self.model.get_all_terms(force_refresh=True)
-        self._apply_filters()
+        self._schedule_apply_filters()
 
     def is_ready(self) -> bool:
         """データベースが利用可能かチェック"""
@@ -326,19 +346,44 @@ class WordListController:
     def hide(self):
         if hasattr(self.view, "hide"):
             self.view.hide()
+        # 画面非表示時に保留しているフィルタ適用をキャンセル
+        if self._apply_after_id is not None and hasattr(self.app, 'root'):
+            try:
+                self.app.root.after_cancel(self._apply_after_id)
+            except Exception:
+                pass
+            self._apply_after_id = None
             
 
     # --- 画面遷移 ---
     def go_to_home(self):
         """Home画面へ遷移"""
+        if self._apply_after_id is not None and hasattr(self.app, 'root'):
+            try:
+                self.app.root.after_cancel(self._apply_after_id)
+            except Exception:
+                pass
+            self._apply_after_id = None
         self.app.switch_view("home")
 
     def go_to_quiz(self):
         """問題選択画面へ遷移"""
+        if self._apply_after_id is not None and hasattr(self.app, 'root'):
+            try:
+                self.app.root.after_cancel(self._apply_after_id)
+            except Exception:
+                pass
+            self._apply_after_id = None
         self.app.switch_view("qselect")
 
     def go_to_wordentry(self):
         """単語登録画面へ遷移"""
+        if self._apply_after_id is not None and hasattr(self.app, 'root'):
+            try:
+                self.app.root.after_cancel(self._apply_after_id)
+            except Exception:
+                pass
+            self._apply_after_id = None
         self.app.switch_view("wordentry")
 
     def on_term_selected(self, word_name: str):
