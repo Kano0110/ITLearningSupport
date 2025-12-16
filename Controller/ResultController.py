@@ -38,7 +38,7 @@ class ResultController:
             self.view.close()
             
     def set_result(self, correct_count, total_questions, category, tag, wronged_terms, mode, selected_terms, num_questions):
-        
+        self._ensure_view()
 
         self.correct_count = correct_count
         self.total_questions = total_questions
