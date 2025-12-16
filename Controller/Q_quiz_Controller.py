@@ -10,8 +10,8 @@ class Q_Quiz_Controller:
         self.view = None  # 後で View を生成して接続
         self.term_list: List[str] = []
         self.mode: str = "hide_word"  # 'hide_word' or 'hide_desc'
-        self.tag: Optional[str] = None
-        self.category: Optional[str] = None
+        self.tag: list[str] = []
+        self.category: list[str] = []
         self.num_questions: int = 10
 
         self.current_index: int = 0
@@ -38,10 +38,27 @@ class Q_Quiz_Controller:
 
         self.term_list = pool[:num_questions]
 
+        self.categories = []
+        self.tags = []
+
         self.quiz_data = []
         for term_name in self.term_list:
             detail = self.model.get_term_detail(term_name)
-            distractors = self.model.get_distractors(detail["id"], tag=detail.get("tag"), category=detail.get("category"))
+
+            cat = detail.get("category")
+            tag = detail.get("tag")
+
+            if cat and cat not in self.categories:
+                self.categories.append(cat)
+            if tag and tag not in self.tags:
+                self.tags.append(tag)
+
+            distractors = self.model.get_distractors(
+                detail["id"],
+                tag=tag,
+                category=cat
+            )
+
             self.quiz_data.append({
                 "term": detail,
                 "choices": self._build_choices(detail, distractors),
@@ -49,10 +66,8 @@ class Q_Quiz_Controller:
                 "correct": None
             })
 
-        if self.category is None:
-            self.category = detail.get("category")
-        if self.tag is None:
-            self.tag = detail.get("tag")
+        self.category = self.categories
+        self.tag = self.tags
 
         self.current_index = 0
         self.correct_count = 0
