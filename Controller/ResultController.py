@@ -36,8 +36,9 @@ class ResultController:
         """現在のビューを非表示にする（AppController が呼ぶ）。"""
         if self.view and hasattr(self.view, "close"):
             self.view.close()
+           
             
-    def set_result(self, correct_count, total_questions, category, tag, wronged_terms, mode, selected_terms, num_questions):
+    def set_result(self, correct_count, total_questions, category, tag, wronged_terms, mode, selected_terms, num_questions, elapsed_time=None):
         self._ensure_view()
 
         self.correct_count = correct_count
@@ -50,13 +51,13 @@ class ResultController:
         #臨時追加
         self.selected_terms = selected_terms
         self.mode = mode
-        self.num_questions = num_questions        
+        self.num_questions = num_questions
+        self.elapsed_time = elapsed_time      
 
         percent = 0
         if total_questions > 0:
             percent = math.floor((correct_count / total_questions) * 100)
-
-       
+            self.elapsed_time = elapsed_time
 
         # View に値を渡す
         self.view.set_result(
@@ -66,6 +67,7 @@ class ResultController:
             category=self.category,
             tag=self.tag,
             wronged=self.wronged_terms,
+            elapsed_time=self.elapsed_time
         )
     # --- 遷移系メソッド ---
     def return_wordlist(self):
