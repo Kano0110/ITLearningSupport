@@ -1,6 +1,7 @@
 #Q_quiz_Controller.py
 from typing import List, Optional
 import random
+import time
 from Model.Q_quiz_Model import Q_Quiz_Model
 
 class Q_Quiz_Controller:
@@ -27,6 +28,7 @@ class Q_Quiz_Controller:
         self.view.show()
 
     def hide(self):
+        self.timer_running = False
         if self.view:
             self.view.hide()
 
@@ -34,9 +36,9 @@ class Q_Quiz_Controller:
         self.mode = mode
         pool = list(selected_terms)
         random.shuffle(pool)
-        self.num_questions = num_questions
+        self.num_questions = min(num_questions, len(pool))
 
-        self.term_list = pool[:num_questions]
+        self.term_list = pool[:self.num_questions]
 
         self.categories = []
         self.tags = []
@@ -44,6 +46,7 @@ class Q_Quiz_Controller:
         self.quiz_data = []
         for term_name in self.term_list:
             detail = self.model.get_term_detail(term_name)
+            if not detail: continue
 
             cat = detail.get("category")
             tag = detail.get("tag")
@@ -65,6 +68,11 @@ class Q_Quiz_Controller:
                 "answered": False,
                 "correct": None
             })
+            if self.quiz_data:
+            # 最初の問題のメタデータを利用
+                first = self.quiz_data[0]["term"]
+                if self.category is None: self.category = first.get("category")
+                if self.tag is None: self.tag = first.get("tag")
 
         self.category = self.categories
         self.tag = self.tags
@@ -72,6 +80,22 @@ class Q_Quiz_Controller:
         self.current_index = 0
         self.correct_count = 0
         self._show_current_question()
+            # タイマースタート
+        self.start_time = time.time()
+        self.timer_running = True
+        self._update_timer()
+
+    def _update_timer(self):
+        """1秒ごとに時間を更新"""
+        if not self.timer_running:
+            return
+    
+        elapsed = time.time() - self.start_time
+        if self.view:
+            self.view.update_timer(elapsed)
+    
+        # 1秒後に再実行 (1000ms)
+        self.app.root.after(1000, self._update_timer)
 
     def _build_choices(self, correct_term, distractors):
         choices = [correct_term] + distractors
@@ -81,6 +105,9 @@ class Q_Quiz_Controller:
         return choices
         
     def _show_current_question(self):
+        if self.current_index >= len(self.quiz_data):
+            self._finish_quiz()
+            return
         q = self.quiz_data[self.current_index]
         term = q["term"]
         choices = q["choices"]
@@ -99,6 +126,7 @@ class Q_Quiz_Controller:
     def handle_answer(self, selected: dict):
         q = self.quiz_data[self.current_index]
         correct_term = q["term"]
+        is_correct = (selected.get("id") == correct_term.get("id"))
         is_correct = False
         if self.mode == "hide_word":
             is_correct = selected.get("name") == correct_term.get("name")
@@ -117,14 +145,18 @@ class Q_Quiz_Controller:
                 "desc": correct_term.get("desc"),
                 "user_answer": selected.get("name") or selected.get("desc")
             })
+            self.timer_running = False
 
-        self.view.show_result(is_correct, correct_term)
+        self.view.show_result(is_correct, correct_term, selected)
 
     def next_question(self):
         """次の問題へ進む"""
         self.current_index += 1
         if self.current_index < len(self.quiz_data):
             self._show_current_question()
+            #self.start_time = time.time()
+            self.timer_running = True
+            self._update_timer()
         else:
             self._finish_quiz()  # ← 最後の問題を終えたら終了処理へ
 
@@ -135,16 +167,22 @@ class Q_Quiz_Controller:
     def _finish_quiz(self):
         """結果画面へ遷移"""
         #self.app.switch_view("home")
-        self.app.show_quiz_result(
-        correct_count=self.correct_count,
-        total_questions=len(self.quiz_data),
-        category=self.category,
-        tag=self.tag,
-        wronged_terms=self.wronged_terms,
-
-#臨時追加
-        selected_terms=self.term_list,
-        mode=self.mode,
-        num_questions=self.num_questions
-
-    )
+        self.timer_running = False # タイマーストップ
+        elapsed_time = time.time() - self.start_time
+            # AppControllerに結果画面表示を依頼
+        if hasattr(self.app, "show_quiz_result"):
+            self.app.show_quiz_result(
+            correct_count=self.correct_count,
+            total_questions=len(self.quiz_data),
+            category=self.category,
+            tag=self.tag,
+            wronged_terms=self.wronged_terms,
+            elapsed_time=elapsed_time,
+            selected_terms=self.term_list,
+            mode=self.mode,
+            num_questions=self.num_questions
+            )
+        else:
+            # メソッドがない場合のフォールバック（ホームへ）
+            print("Warning: show_quiz_result not implemented in AppController")
+            self.app.switch_view("home")
