@@ -271,12 +271,27 @@ class Q_SelectView:
             btn.pack(side='left', padx=10, pady=15)
 
     def _create_back_button(self):
-        """戻るボタンを作成"""
+        """戻る・単語一覧に戻るボタンを作成"""
+
         back_frame = ttk.Frame(self.frame, padding=(15, 5, 15, 10))
         back_frame.pack(fill='x')
-        
-        back_btn = ttk.Button(back_frame, text="＜戻る", command=self._on_back_btn_click, width=16)
-        back_btn.pack(anchor='w', pady=3)
+
+        back_btn = ttk.Button(
+            back_frame,
+            text="＜戻る",
+            command=self._on_back_btn_click,
+            width=16
+        )
+        back_btn.pack(side='left', pady=3)
+
+        wordlist_btn = ttk.Button(
+            back_frame,
+            text="単語一覧に戻る",
+            command=self.controller.return_wordlist,
+            width=16
+        )
+        wordlist_btn.pack(side='left', padx=(10, 0), pady=3)
+
 
     def _on_canvas_scroll(self, event, canvas: tk.Canvas):
         """キャンバスのマウスホイールスクロール処理

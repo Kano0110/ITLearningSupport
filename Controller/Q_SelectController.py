@@ -226,6 +226,11 @@ class Q_SelectController:
         except Exception as e:
             print(f"Error: Failed to switch to home: {e}")
 
+
+    def return_wordlist(self):
+        """単語一覧に戻る"""
+        self.app.switch_view("wordlist")
+
     # --- ライフサイクル ---
     def show(self):
         """表示処理（AppControllerから呼ばれる）"""
