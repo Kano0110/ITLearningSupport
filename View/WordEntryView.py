@@ -16,14 +16,14 @@ class WordEntryView:
         vcmd = (self.frame.register(self._validate_hiragana), "%P")
         
         # ウィジェット定義
-        self.entry_Name = ttk.Entry(self.frame, width=40)
-        self.entry_Yomi = ttk.Entry(self.frame, width=40, validate="key", validatecommand=vcmd)
+        self.entry_Name = ttk.Entry(self.frame, width=40, font=("Arial", 11))
+        self.entry_Yomi = ttk.Entry(self.frame, width=40, validate="key", validatecommand=vcmd, font=("Arial", 11))
         
-        self.entry_Kai = tk.Text(self.frame, width=40, height=10)
+        self.entry_Kai = tk.Text(self.frame, width=30, height=5, font=("Arial", 11))
         
         # Combobox (state='normal' などの指定なし = デフォルトで入力も選択も可能)
-        self.cb_Category = ttk.Combobox(self.frame, values=[], width=17)
-        self.cb_Tag = ttk.Combobox(self.frame, values=[], width=17)
+        self.cb_Category = ttk.Combobox(self.frame, values=[], width=17, font=("Arial", 11))
+        self.cb_Tag = ttk.Combobox(self.frame, values=[], width=17, font=("Arial", 11))
         
         # タイトルフレーム
         self.title_frame = tk.Frame(self.frame)
@@ -32,14 +32,16 @@ class WordEntryView:
 
     def _build_ui(self):
         # スタイル設定
-        self.style.configure("Reset.TButton", foreground="#E4342E")
-        self.style.configure("Create.TButton", foreground="#099945")
-        self.style.configure("Back.TButton", foreground="#1523E6")
+        self.style.configure("Reset.TButton", foreground="#FF2200")
+        # 作成ボタンを大きめのフォントと余白で強調
+        self.style.configure("Create.TButton", foreground="#466102", font=("Arial",11))
+        self.style.configure("Back.TButton", foreground="#3F7FF5")
 
+        # レイアウトを grid で構築し、リサイズに追従させる
         # タイトルフレーム（単語一覧と同じスタイル）
         title_frame = tk.Frame(self.frame, bg="#F69713")
-        title_frame.pack(fill='x', ipady=5, padx=40, pady=(20, 0))
-        
+        title_frame.grid(row=0, column=0, columnspan=3, sticky="ew", padx=20, pady=(20, 10))
+
         title_label = tk.Label(
             title_frame,
             text="単語登録",
@@ -47,28 +49,38 @@ class WordEntryView:
             bg='#F69713',
             fg='white'
         )
-        title_label.pack(anchor='center', padx=40)
+        title_label.pack(anchor='center', padx=40, pady=5)
 
-        # place を使用したレイアウト (ウィンドウサイズ固定前提)
-        # タイトルフレーム分（約50px）下げる
-        ttk.Label(self.frame, text='単語名：').place(x=60, y=80)
-        self.entry_Name.place(x=150, y=80)
+        # グリッド構成: ラベル列(固定) + 入力列(伸縮) + 右側操作列(一部固定)
+        self.frame.columnconfigure(0, weight=0, minsize=110)
+        self.frame.columnconfigure(1, weight=1, minsize=200)
+        self.frame.columnconfigure(2, weight=0, minsize=120)
+        # 行の伸縮: 解説のテキストエリアが縦に伸びる
+        self.frame.rowconfigure(3, weight=1)
 
-        ttk.Label(self.frame, text='ふりがな：').place(x=59, y=110)
-        self.entry_Yomi.place(x=150, y=110)
+        # 単語名
+        ttk.Label(self.frame, text='単語名：', font=("Arial", 11)).grid(row=1, column=0, sticky="w", padx=20, pady=5)
+        self.entry_Name.grid(row=1, column=1, sticky="ew", padx=(0, 10), pady=5)
+        ttk.Button(self.frame, text='リセット', style="Reset.TButton", command=lambda: self.controller.create_reset_window()).grid(row=1, column=2, sticky="e", padx=20, pady=5)
 
-        ttk.Label(self.frame, text='解説：').place(x=65, y=170)
-        self.entry_Kai.place(x=150, y=140)
-        
-        ttk.Label(self.frame, text='カテゴリ').place(x=70, y=310)
-        self.cb_Category.place(x=120, y=310)
-        
-        ttk.Label(self.frame, text='タグ').place(x=315, y=310)
-        self.cb_Tag.place(x=350, y=310)
-        
-        ttk.Button(self.frame, text='単語一覧に戻る', command=lambda: self.controller.create_close_window(), style="Back.TButton").place(x=40, y=390)
-        ttk.Button(self.frame, text='リセット', style="Reset.TButton", command=lambda: self.controller.create_reset_window()).place(x=490, y=90)
-        ttk.Button(self.frame, text='作成', style="Create.TButton", command=lambda: self.controller.get_id_pass()).place(x=490, y=390)
+        # ふりがな
+        ttk.Label(self.frame, text='ふりがな：', font=("Arial", 11)).grid(row=2, column=0, sticky="w", padx=20, pady=5)
+        self.entry_Yomi.grid(row=2, column=1, sticky="ew", padx=(0, 10), pady=5)
+
+        # 解説
+        ttk.Label(self.frame, text='解説：', font=("Arial", 11)).grid(row=3, column=0, sticky="nw", padx=20, pady=5)
+        self.entry_Kai.grid(row=3, column=1, sticky="nsew", padx=(0, 10), pady=5)
+
+        # カテゴリ / タグ 行
+        ttk.Label(self.frame, text='カテゴリ', font=("Arial", 11)).grid(row=4, column=0, sticky="w", padx=20, pady=5)
+        self.cb_Category.grid(row=4, column=1, sticky="w", padx=(0, 10), pady=5)
+
+        ttk.Label(self.frame, text='タグ', font=("Arial", 11)).grid(row=5, column=0, sticky="w", padx=20, pady=5)
+        self.cb_Tag.grid(row=5, column=1, sticky="w", padx=(0, 10), pady=5)
+
+        # フッターボタン行
+        ttk.Button(self.frame, text='単語一覧に戻る', command=lambda: self.controller.create_close_window(), style="Back.TButton").grid(row=6, column=0, sticky="w", padx=20, pady=(10, 20))
+        ttk.Button(self.frame, text='作成', style="Create.TButton", command=lambda: self.controller.get_id_pass()).grid(row=6, column=2, sticky="e", padx=20, pady=(10, 20))
 
         self.entry_Name.bind("<Return>", lambda e: self.entry_Yomi.focus_set())
         self.entry_Yomi.bind("<Return>", lambda e: self.entry_Kai.focus_set())

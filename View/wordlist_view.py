@@ -75,9 +75,9 @@ class WordListView:
         
         # スタイル設定
         style = ttk.Style()
-        style.configure('Home.TButton', foreground="#1523E6", font=('Arial', 11, 'bold'))
+        style.configure('Home.TButton', foreground="#3F7FF5", font=('Arial', 11, 'bold'))
         style.configure('Quiz.TButton', foreground="#E67E22", font=('Arial', 11, 'bold'))
-        style.configure('Entry.TButton', foreground="#099945", font=('Arial', 11, 'bold'))
+        style.configure('Entry.TButton', foreground="#466102", font=('Arial', 11, 'bold'))
         
         
         buttons = [

@@ -111,25 +111,80 @@ class Q_SelectController:
     # --- 選択操作 ---
     def toggle_tag(self, tag: str):
         """タグの選択状態をトグル"""
-        if tag in self.selected_tags:
-            self.selected_tags.remove(tag)
+        # 数字タグ対応：文字列に統一
+        tag_str = str(tag)
+        if tag_str in self.selected_tags:
+            self.selected_tags.remove(tag_str)
         else:
-            self.selected_tags.add(tag)
+            self.selected_tags.add(tag_str)
         self._recompute_filtered_terms()
 
     def toggle_category(self, category: str):
         """カテゴリの選択状態をトグル"""
-        if category in self.selected_categories:
-            self.selected_categories.remove(category)
+        # 数字カテゴリ対応：文字列に統一
+        category_str = str(category)
+        if category_str in self.selected_categories:
+            self.selected_categories.remove(category_str)
         else:
-            self.selected_categories.add(category)
+            self.selected_categories.add(category_str)
         self._recompute_filtered_terms()
+
+    def are_all_tags_selected(self) -> bool:
+        """全タグが選択されているかチェック"""
+        if not self.selected_tags:
+            return False
+        all_tags = set(str(t) for t in self.model.get_all_tags())
+        return self.selected_tags == all_tags
+
+    def are_any_tags_selected(self) -> bool:
+        """タグが1つ以上選択されているかチェック"""
+        return len(self.selected_tags) > 0
+
+    def are_all_categories_selected(self) -> bool:
+        """全カテゴリが選択されているかチェック"""
+        if not self.selected_categories:
+            return False
+        all_categories = set(str(c) for c in self.model.get_categories())
+        return self.selected_categories == all_categories
+
+    def are_any_categories_selected(self) -> bool:
+        """カテゴリが1つ以上選択されているかチェック"""
+        return len(self.selected_categories) > 0
+
+    def toggle_select_all_tags(self):
+        """タグの全選択/全解除をトグル"""
+        try:
+            if self.are_all_tags_selected():
+                # 全選択状態なら全解除
+                self.selected_tags.clear()
+            else:
+                # それ以外なら全選択
+                tags = self.model.get_all_tags()
+                self.selected_tags = set(str(t) for t in tags)
+            self._recompute_filtered_terms()
+        except Exception as e:
+            print(f"Warning: toggle_select_all_tags failed: {e}")
+
+    def toggle_select_all_categories(self):
+        """カテゴリの全選択/全解除をトグル"""
+        try:
+            if self.are_all_categories_selected():
+                # 全選択状態なら全解除
+                self.selected_categories.clear()
+            else:
+                # それ以外なら全選択
+                cats = self.model.get_categories()
+                self.selected_categories = set(str(c) for c in cats)
+            self._recompute_filtered_terms()
+        except Exception as e:
+            print(f"Warning: toggle_select_all_categories failed: {e}")
 
     def select_all_tags(self):
         """全タグを選択"""
         try:
             tags = self.model.get_all_tags()
-            self.selected_tags = set(tags)
+            # 数字タグ対応：全て文字列に統一
+            self.selected_tags = set(str(t) for t in tags)
             self._recompute_filtered_terms()
         except Exception as e:
             print(f"Warning: select_all_tags failed: {e}")
@@ -138,7 +193,8 @@ class Q_SelectController:
         """全カテゴリを選択"""
         try:
             cats = self.model.get_categories()
-            self.selected_categories = set(cats)
+            # 数字カテゴリ対応：全て文字列に統一
+            self.selected_categories = set(str(c) for c in cats)
             self._recompute_filtered_terms()
         except Exception as e:
             print(f"Warning: select_all_categories failed: {e}")
