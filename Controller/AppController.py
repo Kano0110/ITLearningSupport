@@ -214,7 +214,7 @@ class AppController:
             print(f"Error: Failed to start quiz: {e}")
             traceback.print_exc()
 
-    def show_quiz_result(self, correct_count, total_questions, category=None, tag=None, wronged_terms=None,selected_terms=None, mode=None, num_questions=None):
+    def show_quiz_result(self, correct_count, total_questions, category=None, tag=None, wronged_terms=None,selected_terms=None, mode=None, num_questions=None,elapsed_time=None):
         """結果画面へ遷移"""
         self.switch_view("result")
         if hasattr(self.current_controller, "set_result"):
@@ -224,9 +224,8 @@ class AppController:
                 category=category,
                 tag=tag,
                 wronged_terms=wronged_terms,
-
-                #追加
                 selected_terms=selected_terms,
                 mode=mode,
-                num_questions=num_questions
+                num_questions=num_questions,
+                elapsed_time=elapsed_time
             )

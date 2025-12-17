@@ -37,8 +37,9 @@ class ResultView:
 
         # 経過時間
         """まだ制作中"""
-        labelTime = ttk.Label(self.frame, text="",font=self.Correct_font) 
-        labelTime.place(x=60,y=100)
+        self.labelTime = ttk.Label(self.frame, text="", font=self.Correct_font)
+        self.labelTime.place(x=60, y=100)
+
  
         # 絞り込み条件
         labelframe = tk.LabelFrame(self.frame, text="絞り込み条件", labelanchor="n", width=300, height=100, font=my_font)
@@ -73,12 +74,10 @@ class ResultView:
         scroll_bar.pack(side=tk.RIGHT, fill=tk.Y)
         self.listboxWrong.config(yscrollcommand=scroll_bar.set)
  
-    def set_result(self, correct_count, total_questions, percent, category, tag, wronged):
-        
-        """Controllerから結果を受け取り、UIに反映"""
+    def set_result(self, correct_count, total_questions, percent,category=None, tag=None, wronged=None, elapsed_time=None):
         self.labelCorrect.config(text=f"{total_questions}問中、{correct_count}問正解！")
         self.labelPercent.config(text=f"正解率：{percent}%")
- 
+
         # カテゴリ
         self.listCategoryName.delete(0, tk.END)
         if category:
@@ -94,16 +93,22 @@ class ResultView:
                 self.listTagName.insert(tk.END, t)
         else:
             self.listTagName.insert(tk.END, "N/A")
- 
+
+        # 経過時間
+        if elapsed_time is not None:
+            minutes = int(elapsed_time // 60)
+            seconds = int(elapsed_time % 60)
+            self.labelTime.config(text=f"経過時間：{minutes}分{seconds}秒")
+        else:
+            self.labelTime.config(text="")
+
         # 間違えた問題リスト更新
+
         self.listboxWrong.delete(0, tk.END)
         if wronged:
             for item in wronged:
                 self.listboxWrong.insert(tk.END, item)
-        
-        
-
- 
+  
     def show(self):
         self.frame.pack(expand=True, fill='both')
  
