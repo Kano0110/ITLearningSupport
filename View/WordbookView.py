@@ -1,11 +1,15 @@
 import tkinter as tk
 from tkinter import ttk
+import re
+from tkinter import messagebox
 
 class WordbookView(tk.Frame):
     def __init__(self, master, controller):
         super().__init__(master)
         self.master.title("WordBook - Wordbook")
         self.controller = controller
+
+        
 
         # UI状態
         self.name_is_visible = True
@@ -39,6 +43,8 @@ class WordbookView(tk.Frame):
         # メインコンテナ
         main_frame = ttk.Frame(self)
         main_frame.pack(fill='both', expand=True, padx=20, pady=20)
+
+        vcmd = (self.register(self._validate_hiragana), "%P")
 
         main_frame.columnconfigure(1, weight=1)
 
@@ -88,7 +94,12 @@ class WordbookView(tk.Frame):
         self.label_yomi = ttk.Label(main_frame, textvariable=self.wordYomi_var)
         self.label_yomi.grid(row=2, column=1, sticky='w', padx=5, pady=5)
         
-        self.edit_yomi_entry = ttk.Entry(main_frame, textvariable=self._edit_yomi_var)
+        self.edit_yomi_entry = ttk.Entry(
+            main_frame,
+            textvariable=self._edit_yomi_var,
+            validate="key",
+            validatecommand=vcmd
+        )
 
         # === 4. 説明文エリア ===
         desc_label_frame = ttk.Frame(main_frame)
@@ -291,10 +302,31 @@ class WordbookView(tk.Frame):
         for btn in btns:
             btn.config(state=state)
 
+    def _validate_hiragana(self, P):
+        # P = 入力後の文字列
+        if P == "":
+            return True
+        import re
+        return bool(re.fullmatch(r"[ぁ-ゖー]*", P))
+
     def _on_save_clicked(self):
+        
         name = self._edit_name_var.get().strip()
         yomi = self._edit_yomi_var.get().strip()
         tag = self._edit_tag_var.get().strip()
         category = self._edit_category_var.get().strip()
         desc = self.edit_desc_text.get("1.0", "end-1c").strip()
+
+        #よみがな検証
+        if not re.fullmatch(r"[ぁ-ゖー]*", yomi):
+            messagebox.showerror("入力エラー", "読みはひらがなのみ入力してください")
+            return
+
         self.controller.save_edits(name=name, description=desc, tag=tag, category=category, yomi=yomi)
+
+
+    
+        
+
+
+        
