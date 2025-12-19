@@ -11,8 +11,8 @@ class Q_Quiz_Controller:
         self.view = None  # 後で View を生成して接続
         self.term_list: List[str] = []
         self.mode: str = "hide_word"  # 'hide_word' or 'hide_desc'
-        self.tag: list[str] = []
-        self.category: list[str] = []
+        self.selected_tags = []
+        self.selected_categories = []
         self.num_questions: int = 10
 
         self.current_index: int = 0
@@ -32,34 +32,27 @@ class Q_Quiz_Controller:
         if self.view:
             self.view.hide()
 
-    def start(self, selected_terms: List[str], mode: str = "hide_word", num_questions: int = 10):
+    def start(self, selected_terms: List[str], mode: str = "hide_word", num_questions: int = 10,selected_tags=None,selected_categories=None):
         self.mode = mode
         pool = list(selected_terms)
         random.shuffle(pool)
-        self.num_questions = min(num_questions, len(pool))
 
+        self.num_questions = min(num_questions, len(pool))
         self.term_list = pool[:self.num_questions]
 
-        self.categories = []
-        self.tags = []
+       # self.quiz_data = []
 
-        self.quiz_data = []
+        self.selected_tags = selected_tags or []
+        self.selected_categories = selected_categories or []
+
         for term_name in self.term_list:
             detail = self.model.get_term_detail(term_name)
-            if not detail: continue
-
-            cat = detail.get("category")
-            tag = detail.get("tag")
-
-            if cat and cat not in self.categories:
-                self.categories.append(cat)
-            if tag and tag not in self.tags:
-                self.tags.append(tag)
-
+            if not detail:
+                continue
             distractors = self.model.get_distractors(
                 detail["id"],
-                tag=tag,
-                category=cat
+                tag=detail.get("tag"),
+                category=detail.get("category")
             )
 
             self.quiz_data.append({
@@ -68,14 +61,9 @@ class Q_Quiz_Controller:
                 "answered": False,
                 "correct": None
             })
-            if self.quiz_data:
-            # 最初の問題のメタデータを利用
-                first = self.quiz_data[0]["term"]
-                if self.category is None: self.category = first.get("category")
-                if self.tag is None: self.tag = first.get("tag")
 
-        self.category = self.categories
-        self.tag = self.tags
+
+
 
         self.current_index = 0
         self.correct_count = 0
@@ -127,7 +115,7 @@ class Q_Quiz_Controller:
         q = self.quiz_data[self.current_index]
         correct_term = q["term"]
         is_correct = (selected.get("id") == correct_term.get("id"))
-        is_correct = False
+
         if self.mode == "hide_word":
             is_correct = selected.get("name") == correct_term.get("name")
         else:
@@ -172,15 +160,15 @@ class Q_Quiz_Controller:
             # AppControllerに結果画面表示を依頼
         if hasattr(self.app, "show_quiz_result"):
             self.app.show_quiz_result(
-            correct_count=self.correct_count,
-            total_questions=len(self.quiz_data),
-            category=self.category,
-            tag=self.tag,
-            wronged_terms=self.wronged_terms,
-            elapsed_time=elapsed_time,
-            selected_terms=self.term_list,
-            mode=self.mode,
-            num_questions=self.num_questions
+                correct_count=self.correct_count,
+                total_questions=len(self.quiz_data),
+                category=self.selected_categories,
+                tag=self.selected_tags,
+                wronged_terms=self.wronged_terms,
+                elapsed_time=elapsed_time,
+                selected_terms=self.term_list,
+                mode=self.mode,
+                num_questions=self.num_questions
             )
         else:
             # メソッドがない場合のフォールバック（ホームへ）

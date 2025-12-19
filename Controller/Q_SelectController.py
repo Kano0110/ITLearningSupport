@@ -192,7 +192,10 @@ class Q_SelectController:
                 except Exception:
                     pass
                 self._update_after_id = None
-            self.app.start_quiz(self.selected_terms, mode='hide_word')
+            self.app.start_quiz(self.selected_terms
+                                , mode='hide_word'
+                                ,selected_tags=list(self.selected_tags)
+                                ,selected_categories=list(self.selected_categories))
         except Exception as e:
             print(f"Error: Failed to start hide_word quiz: {e}")
 
@@ -208,7 +211,9 @@ class Q_SelectController:
                 except Exception:
                     pass
                 self._update_after_id = None
-            self.app.start_quiz(self.selected_terms, mode='hide_explanation')
+            self.app.start_quiz(self.selected_terms, mode='hide_explanation'
+                                ,selected_tags=list(self.selected_tags)
+                                ,selected_categories=list(self.selected_categories))
         except Exception as e:
             print(f"Error: Failed to start hide_explanation quiz: {e}")
 
