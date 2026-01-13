@@ -31,6 +31,8 @@ class Q_SelectView:
         self.categories_container = None
         self.tags_canvas = None
         self.categories_canvas = None
+        self.select_all_tags_btn = None
+        self.select_all_categories_btn = None
         
         # UI を構築
         self._build_ui()
@@ -48,7 +50,7 @@ class Q_SelectView:
     def _create_title(self):
         """タイトルエリアを作成"""
         title_frame = tk.Frame(self.frame, bg='#4A90E2')
-        title_frame.pack(fill='x', pady=20, padx=20)
+        title_frame.pack(fill='x', pady=15, padx=15)
         
         title_label = tk.Label(
             title_frame,
@@ -61,7 +63,7 @@ class Q_SelectView:
 
     def _create_multi_selectors(self):
         """タグ/カテゴリのチェックボックス群を作成（スクロール対応）"""
-        outer = ttk.Frame(self.frame, padding=(20, 20, 20, 10))
+        outer = ttk.Frame(self.frame, padding=(15, 15, 15, 8))
         outer.pack(fill='both', expand=False)
 
         # タグ領域
@@ -95,8 +97,8 @@ class Q_SelectView:
         Returns:
             作成したキャンバス
         """
-        frame = ttk.LabelFrame(parent, text=label, padding=10)
-        frame.pack(fill='x', pady=(0, 10))
+        frame = ttk.LabelFrame(parent, text=label, padding=12)
+        frame.pack(fill='x', pady=(0, 5))
         
         canvas = tk.Canvas(frame, height=height)
         scrollbar = ttk.Scrollbar(frame, orient='vertical', command=canvas.yview)
@@ -120,7 +122,7 @@ class Q_SelectView:
     def _create_operation_buttons(self, parent: ttk.Frame):
         """操作ボタン（全解除/全選択）を作成"""
         ops_frame = ttk.Frame(parent)
-        ops_frame.pack(fill='x', pady=(5, 5))
+        ops_frame.pack(fill='x', pady=(2, 2))
         
         # スタイル設定
         style = ttk.Style()
@@ -128,28 +130,32 @@ class Q_SelectView:
         style.configure('SelectTag.TButton', foreground='#5CB85C')
         style.configure('SelectCat.TButton', foreground='#5BC0DE')
         
-        buttons = [
-            ("全て解除", self._on_clear_all_click, 12, 'Clear.TButton'),
-            ("タグ全選択", self._on_select_all_tags_click, 12, 'SelectTag.TButton'),
-            ("カテゴリ全選択", self._on_select_all_categories_click, 12, 'SelectCat.TButton')
-        ]
+        # 全て解除ボタン
+        clear_btn = ttk.Button(ops_frame, text="全て解除", command=self._on_clear_all_click, width=13, style='Clear.TButton')
+        clear_btn.pack(side='left', padx=(0, 8), pady=3)
         
-        for text, command, width, style_name in buttons:
-            btn = ttk.Button(ops_frame, text=text, command=command, width=width, style=style_name)
-            btn.pack(side='left', padx=(0, 10))
+        # タグ全選択ボタン（参照を保持）
+        self.select_all_tags_btn = ttk.Button(ops_frame, text="タグ全選択", command=self._on_select_all_tags_click, width=13, style='SelectTag.TButton')
+        self.select_all_tags_btn.pack(side='left', padx=(0, 8), pady=3)
+        
+        # カテゴリ全選択ボタン（参照を保持）
+        self.select_all_categories_btn = ttk.Button(ops_frame, text="カテゴリ全選択", command=self._on_select_all_categories_click, width=13, style='SelectCat.TButton')
+        self.select_all_categories_btn.pack(side='left', padx=(0, 8), pady=3)
 
     def _create_summary_label(self, parent: ttk.Frame):
         """サマリー表示ラベルを作成"""
         summary_frame = tk.Frame(parent, bg='#F0F0F0')
-        summary_frame.pack(fill='x', pady=(10, 0), padx=10, ipady=8)
+        summary_frame.pack(fill='x', pady=(8, 0), padx=12, ipady=6)
         self.summary_label = tk.Label(
             summary_frame, 
             text="全て (0個)", 
-            font=('Arial', 10, 'bold'), 
+            font=('Arial', 11, 'bold'), 
             fg='#333333',
             bg='#F0F0F0'
         )
         self.summary_label.pack(side='left', padx=5)
+        
+        self.summary_label.pack(side='left', padx=3)
 
     def _build_tag_checkboxes(self):
         """タグチェックボックスを構築"""
@@ -206,16 +212,17 @@ class Q_SelectView:
             var = vars_dict.get(item_str) or tk.BooleanVar(value=False)
             vars_dict[item_str] = var
             
-            # 10文字以上の場合は省略表示
-            display_text = item_str if len(item_str) < 10 else item_str[:9] + '…'
+            # 8文字以上の場合は省略表示
+            display_text = item_str if len(item_str) < 8 else item_str[:7] + '…'
             
             cb = ttk.Checkbutton(
                 row_frame, 
                 text=display_text, 
                 variable=var, 
-                command=lambda i=item_str: toggle_callback(i)
+                command=lambda i=item_str: toggle_callback(i),
+                style='LargeCheck.TCheckbutton'
             )
-            cb.pack(side='left', padx=4, pady=2)
+            cb.pack(side='left', padx=2, pady=2)
             self._bind_scroll_events(cb, canvas)
             
             col_count += 1
@@ -251,7 +258,7 @@ class Q_SelectView:
 
     def _create_quiz_buttons(self):
         """出題ボタンを作成"""
-        buttons_frame = ttk.Frame(self.frame, padding=(20, 0, 20, 10))
+        buttons_frame = ttk.Frame(self.frame, padding=(15, 5, 15, 10))
         buttons_frame.pack(fill='both', expand=True)
 
         inner_buttons_frame = ttk.Frame(buttons_frame)
@@ -263,16 +270,23 @@ class Q_SelectView:
         ]
         
         for text, command, style_name in quiz_buttons:
-            btn = ttk.Button(inner_buttons_frame, text=text, command=command, width=20, style=style_name)
-            btn.pack(side='left', padx=20, pady=20)
+            btn = ttk.Button(inner_buttons_frame, text=text, command=command, width=18, style=style_name)
+            btn.pack(side='left', padx=10, pady=15)
+            # フォントサイズを大きくする
+            btn_style = ttk.Style()
+            btn_style.configure('Quiz1.TButton', font=("Arial", 11))
+            btn_style.configure('Quiz2.TButton', font=("Arial", 11))
 
     def _create_back_button(self):
         """戻るボタンを作成"""
-        back_frame = ttk.Frame(self.frame, padding=(20, 0, 20, 10))
+        back_frame = ttk.Frame(self.frame, padding=(15, 5, 15, 10))
         back_frame.pack(fill='x')
         
-        back_btn = ttk.Button(back_frame, text="＜戻る", command=self._on_back_btn_click, width=15)
-        back_btn.pack(anchor='w')
+        back_btn = ttk.Button(back_frame, text="＜戻る", command=self._on_back_btn_click, width=16)
+        back_btn.pack(anchor='w', pady=3)
+        # フォントサイズを大きくする
+        style = ttk.Style()
+        style.configure('Back.TButton', font=("Arial", 11))
 
     def _on_canvas_scroll(self, event, canvas: tk.Canvas):
         """キャンバスのマウスホイールスクロール処理
@@ -300,12 +314,12 @@ class Q_SelectView:
         self.controller.clear_all()
 
     def _on_select_all_tags_click(self):
-        """タグ全選択ボタンクリック時の処理"""
-        self.controller.select_all_tags()
+        """タグ全選択/解除ボタンクリック時の処理"""
+        self.controller.toggle_select_all_tags()
 
     def _on_select_all_categories_click(self):
-        """カテゴリ全選択ボタンクリック時の処理"""
-        self.controller.select_all_categories()
+        """カテゴリ全選択/解除ボタンクリック時の処理"""
+        self.controller.toggle_select_all_categories()
 
     def _on_state_changed(self, terms: list[str], summary_text: str, 
                          selected_tags: set[str], selected_categories: set[str]):
@@ -317,14 +331,46 @@ class Q_SelectView:
             selected_tags: 選択中のタグセット
             selected_categories: 選択中のカテゴリセット
         """
+        # 選択状態を文字列で統一（数字カテゴリ対応）
+        selected_tags_str = set(str(t) for t in selected_tags)
+        selected_categories_str = set(str(c) for c in selected_categories)
+        
         for tag, var in self.tag_vars.items():
-            var.set(tag in selected_tags)
+            var.set(tag in selected_tags_str)
         for cat, var in self.category_vars.items():
-            var.set(cat in selected_categories)
+            var.set(cat in selected_categories_str)
         self.summary_label.config(text=summary_text)
+        
+        # ボタンテキストを動的に更新
+        try:
+            if self.select_all_tags_btn:
+                if self.controller.are_all_tags_selected():
+                    self.select_all_tags_btn.config(text="タグ全解除")
+                else:
+                    self.select_all_tags_btn.config(text="タグ全選択")
+            
+            if self.select_all_categories_btn:
+                if self.controller.are_all_categories_selected():
+                    self.select_all_categories_btn.config(text="カテゴリ全解除")
+                else:
+                    self.select_all_categories_btn.config(text="カテゴリ全選択")
+        except Exception as e:
+            print(f"Warning: Failed to update button text: {e}")
+
+    def refresh_tag_category_options(self):
+        """タグとカテゴリのチェックボックスリストを再構築（新規追加データ反映用）"""
+        try:
+            self._build_tag_checkboxes()
+            self._build_category_checkboxes()
+        except Exception as e:
+            print(f"Warning: refresh_tag_category_options failed: {e}")
 
     def _on_hide_words_click(self):
         """単語を隠して出題ボタンクリック時の処理"""
+        # タグとカテゴリが1つも選択されていない場合は警告
+        if not self.controller.are_any_tags_selected() and not self.controller.are_any_categories_selected():
+            messagebox.showwarning("警告", "タグまたはカテゴリを選択してください")
+            return
         if not self.controller.get_selected_terms():
             messagebox.showwarning("警告", "用語が選択されていません")
             return
@@ -332,6 +378,10 @@ class Q_SelectView:
 
     def _on_hide_explanations_click(self):
         """説明を隠して出題ボタンクリック時の処理"""
+        # タグとカテゴリが1つも選択されていない場合は警告
+        if not self.controller.are_any_tags_selected() and not self.controller.are_any_categories_selected():
+            messagebox.showwarning("警告", "タグまたはカテゴリを選択してください")
+            return
         if not self.controller.get_selected_terms():
             messagebox.showwarning("警告", "用語が選択されていません")
             return

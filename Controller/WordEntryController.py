@@ -57,17 +57,16 @@ class WordEntryController:
             return
 
         if new_id:
-            # 追加成功: AppController に一覧更新を依頼 (キャッシュクリアなど)
-            # WordListModelのキャッシュをクリアするなどの処理があればここで呼ぶべきだが、
-            # AppController側で管理しているため、画面遷移時などにリロードされることを期待するか、
-            # 明示的にリフレッシュメソッドがあれば呼ぶ。
-            
             self.view.show_success("単語を追加しました。")
+            # 入力欄をクリア（重要）
             self.view.clear_inputs()
-            
-            # 続けて登録したい場合もあるため画面は閉じないが、
-            # 最新のカテゴリ/タグリストを再取得して反映させると、今入力した新しいカテゴリも即座に候補に出るようになる
-            self.show() 
+            # 最新のカテゴリ/タグリストを再取得して反映
+            try:
+                categories = self.model.get_categories()
+                tags = self.model.get_all_tags()
+                self.view.set_combo_values(categories, tags)
+            except Exception as e:
+                print(f"Warning: failed to reload combo values: {e}")
         else:
             self.view.show_error("追加に失敗しました。")
 

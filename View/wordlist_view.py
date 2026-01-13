@@ -61,7 +61,7 @@ class WordListView:
             text="単語一覧",
             bg='#2C3E50',
             fg='white',
-            font=('Arial', 14, 'bold')
+            font=('Arial', 18, 'bold')
         )
         title_label.pack(anchor='center', pady=(0, 0))
         
@@ -75,9 +75,9 @@ class WordListView:
         
         # スタイル設定
         style = ttk.Style()
-        style.configure('Home.TButton', foreground="#1523E6")
-        style.configure('Quiz.TButton', foreground="#E67E22")
-        style.configure('Entry.TButton', foreground="#099945")
+        style.configure('Home.TButton', foreground="#3F7FF5", font=('Arial', 11, 'bold'))
+        style.configure('Quiz.TButton', foreground="#E67E22", font=('Arial', 11, 'bold'))
+        style.configure('Entry.TButton', foreground="#466102", font=('Arial', 11, 'bold'))
         
         
         buttons = [
@@ -88,7 +88,7 @@ class WordListView:
         
         for text, command, style_name in buttons:
             btn = ttk.Button(center_buttons, text=text, command=command, style=style_name)
-            btn.pack(side='left', padx=5)
+            btn.pack(side='left', padx=10, pady=5)
 
     def _create_index_buttons(self):
         """五十音インデックスボタンを作成"""
@@ -100,8 +100,8 @@ class WordListView:
         
         # スタイル設定
         style = ttk.Style()
-        style.configure('Yomi.TButton', foreground='#34495E')
-        style.configure('AllYomi.TButton', foreground='#E74C3C', font=('Arial', 9, 'bold'))
+        style.configure('Yomi.TButton', foreground='#34495E', font=('Arial', 10))
+        style.configure('AllYomi.TButton', foreground='#E74C3C', font=('Arial', 10, 'bold'))
         
         # 五十音インデックス取得
         yomi_keys = []
@@ -115,35 +115,35 @@ class WordListView:
             btn = ttk.Button(
                 center_index, 
                 text=key, 
-                width=3, 
+                width=4, 
                 command=lambda k=key: self.on_yomi_click(k),
                 style='Yomi.TButton'
             )
-            btn.pack(side='left', padx=2)
+            btn.pack(side='left', padx=3, pady=3)
         
         # その他ボタン
         other_btn = ttk.Button(
             center_index, 
             text="他", 
-            width=4, 
+            width=5, 
             command=self.on_other_click,
             style='Yomi.TButton'
         )
-        other_btn.pack(side='left', padx=2)
+        other_btn.pack(side='left', padx=3, pady=3)
         
         # 全て表示ボタン
         all_btn = ttk.Button(
             center_index, 
             text="全て", 
-            width=4, 
+            width=5, 
             command=self.on_show_all_click,
             style='AllYomi.TButton'
         )
-        all_btn.pack(side='left', padx=2)
+        all_btn.pack(side='left', padx=3, pady=3)
 
     def _create_filter_selectors(self):
         """タグとカテゴリのフィルタセレクタを作成"""
-        filter_frame = ttk.Frame(self.frame, padding=(10, 6))
+        filter_frame = ttk.Frame(self.frame, padding=(12, 8))
         filter_frame.pack(fill='x')
         
         center_filter = ttk.Frame(filter_frame)
@@ -168,7 +168,7 @@ class WordListView:
             'category_var',
             self.on_category_selected,
             self.on_category_clear_click,
-            (0, 5)
+            (0, 10)
         )
 
         # フィルタ状態表示
@@ -201,7 +201,7 @@ class WordListView:
             combo.pack(side='left', padx=(0, 2))
             combo.bind('<<ComboboxSelected>>', on_select)
             
-            clear_btn = ttk.Button(parent, text="×", width=2, command=on_clear)
+            clear_btn = ttk.Button(parent, text="×", width=3, command=on_clear)
             clear_btn.pack(side='left', padx=clear_padx)
         else:
             ttk.Label(parent, text="(なし)", foreground='gray').pack(
@@ -219,7 +219,7 @@ class WordListView:
             text="絞り込み状況:", 
             bg='#FFF3CD',
             fg='#856404',
-            font=('Arial', 9, 'bold')
+            font=('Arial', 11, 'bold')
         ).pack(side='left', padx=5)
         
         self.filter_status_label = tk.Label(
@@ -227,7 +227,7 @@ class WordListView:
             text="", 
             fg='#0056B3', 
             bg='#FFF3CD',
-            font=('Arial', 9, 'bold')
+            font=('Arial', 11, 'bold')
         )
         self.filter_status_label.pack(side='left', padx=5)
 
@@ -239,12 +239,12 @@ class WordListView:
         center_search.pack(expand=True)
         
         # 検索ラベル
-        ttk.Label(center_search, text="絞り込み:").pack(side='left', padx=5)
+        ttk.Label(center_search, text="絞り込み:").pack(side='left', padx=7)
         
         # 検索入力欄
         self.search_var = tk.StringVar()
         search_entry = ttk.Entry(center_search, textvariable=self.search_var, width=30)
-        search_entry.pack(side='left', padx=(4, 4))
+        search_entry.pack(side='left', padx=(6, 6))
 
         search_entry.bind('<KeyRelease>',  self.on_serach_change)
         self.after_id = None
@@ -254,7 +254,7 @@ class WordListView:
         
         # クリアボタン
         clear_btn = ttk.Button(center_search, text="クリア", command=self.on_clear_search_click)
-        clear_btn.pack(side='left', padx=5)
+        clear_btn.pack(side='left', padx=8, pady=3)
         
         # 統計情報
         stats = self.controller.get_stats()
@@ -367,13 +367,14 @@ class WordListView:
             lbl = ttk.Label(
                 self.scrollable_frame,
                 text=display_text,
-                padding=(2, 4),
+                padding=(6, 8),
                 cursor='hand2',
                 anchor='center',
                 justify='center',
-                width=15  # 固定幅を設定して均等に保つ
+                width=12,  # 固定幅を設定して均等に保つ
+                font=('Arial', 10)
             )
-            lbl.grid(row=row_index, column=col_index, sticky='ew', padx=3, pady=2)
+            lbl.grid(row=row_index, column=col_index, sticky='ew', padx=1, pady=1)
             
             # イベントバインド
             lbl.bind('<Button-1>', lambda e, term=name: self.on_term_click(term))
@@ -543,4 +544,11 @@ class WordListView:
 
     def hide(self):
         """画面を非表示"""
+        # 検索の保留 after があればキャンセルして他画面への影響を防止
+        try:
+            if hasattr(self, 'after_id') and self.after_id:
+                self.root.after_cancel(self.after_id)
+                self.after_id = None
+        except Exception:
+            pass
         self.frame.pack_forget()
