@@ -34,19 +34,19 @@ class WordEntryView:
         # スタイル設定
         self.style.configure("Reset.TButton", foreground="#FF2200")
         # 作成ボタンを大きめのフォントと余白で強調
-        self.style.configure("Create.TButton", foreground="#466102", font=("Arial",11))
+        self.style.configure("Create.TButton", foreground="#589D41", font=("Arial",11))
         self.style.configure("Back.TButton", foreground="#3F7FF5")
 
         # レイアウトを grid で構築し、リサイズに追従させる
         # タイトルフレーム（単語一覧と同じスタイル）
-        title_frame = tk.Frame(self.frame, bg="#F69713")
+        title_frame = tk.Frame(self.frame, bg="#49AD28")
         title_frame.grid(row=0, column=0, columnspan=3, sticky="ew", padx=20, pady=(20, 10))
 
         title_label = tk.Label(
             title_frame,
             text="単語登録",
             font=('Arial', 18, 'bold'),
-            bg='#F69713',
+            bg="#49AD28",
             fg='white'
         )
         title_label.pack(anchor='center', padx=40, pady=5)
@@ -79,7 +79,7 @@ class WordEntryView:
         self.cb_Tag.grid(row=5, column=1, sticky="w", padx=(0, 10), pady=5)
 
         # フッターボタン行
-        ttk.Button(self.frame, text='単語一覧に戻る', command=lambda: self.controller.create_close_window(), style="Back.TButton").grid(row=6, column=0, sticky="w", padx=20, pady=(10, 20))
+        ttk.Button(self.frame, text='単語一覧に戻る', command=lambda: self.controller.create_close_window(), style="Back.TButton").grid(row=6, column=0, sticky="e", padx=20, pady=(10, 20))
         ttk.Button(self.frame, text='作成', style="Create.TButton", command=lambda: self.controller.get_id_pass()).grid(row=6, column=2, sticky="e", padx=20, pady=(10, 20))
 
         self.entry_Name.bind("<Return>", lambda e: self.entry_Yomi.focus_set())

@@ -48,105 +48,119 @@ class WordbookView(tk.Frame):
 
         main_frame.columnconfigure(1, weight=1)
 
-        # === 1. ヘッダーエリア ===
+        # === 1. ヘッダーエリア (wordlistスタイル) ===
+        title_frame = tk.Frame(main_frame, bg="#E67E22")
+        title_frame.grid(row=0, column=0, columnspan=2, sticky='ew', pady=(0, 20), ipady=5)
+        
+        tk.Label(title_frame, text="単語詳細", font=("Arial", 16, "bold"), bg='#E67E22', fg='white').pack(anchor='center', pady=5)
+        
+        # ボタンフレーム（タイトルの下、外側に配置）
         header_frame = ttk.Frame(main_frame)
-        header_frame.grid(row=0, column=0, columnspan=2, sticky='ew', pady=(0, 20))
+        header_frame.grid(row=1, column=0, columnspan=2, sticky='ew', pady=(0, 15))
         
-        ttk.Label(header_frame, text="単語詳細", font=("TkDefaultFont", 12, "bold")).pack(side=tk.LEFT)
+        # スタイル設定（wordlistスタイル）
+        style = ttk.Style()
+        style.configure('Edit.TButton', foreground="#44EA35", font=('Arial', 10, 'bold'))
+        style.configure('Delete.TButton', foreground="#FF1900", font=('Arial', 10, 'bold'))
+        style.configure('Toggle.TButton', foreground="#000000", font=('Arial', 10))
         
-        # 操作ボタン群コンテナ
+        # 操作ボタン群コンテナ（中央配置）
         self.btn_frame_top = ttk.Frame(header_frame)
-        self.btn_frame_top.pack(side=tk.RIGHT)
+        self.btn_frame_top.pack(expand=True)
         
-        # ボタン配置 (右から順に: 編集 -> 削除 -> (スペース) -> 説明隠す -> 名前隠す)
-        # 修正: ボタン幅を広げて「キャンセル」が入るようにする
-        self.edit_btn = ttk.Button(self.btn_frame_top, text="編集", command=self._on_edit_clicked, width=10)
-        self.edit_btn.pack(side=tk.RIGHT, padx=(5, 0))
+        # 表示切替ボタン群（左側）
+        self.visNameBTN = ttk.Button(self.btn_frame_top, textvariable=self.btnName_var, command=self.controller.toggle_name_view, width=12, style='Toggle.TButton')
+        self.visNameBTN.pack(side=tk.LEFT, padx=5)
+
+        self.visDescriptionBTN = ttk.Button(self.btn_frame_top, textvariable=self.btnDescription_var, command=self.controller.toggle_description_view, width=12, style='Toggle.TButton')
+        self.visDescriptionBTN.pack(side=tk.LEFT, padx=5)
         
-        # 修正: 削除ボタンは初期状態では無効化(編集モードでのみ有効)
-        self.delete_btn = ttk.Button(self.btn_frame_top, text="削除", command=self.controller.handle_delete_word, width=10)
+        # 編集・削除ボタン（右側）
+        self.delete_btn = ttk.Button(self.btn_frame_top, text="削除", command=self.controller.handle_delete_word, width=10, style='Delete.TButton')
         self.delete_btn.config(state='disabled')
-        self.delete_btn.pack(side=tk.RIGHT, padx=(15, 0)) 
-
-        # 表示切替ボタン群
-        self.visDescriptionBTN = ttk.Button(self.btn_frame_top, textvariable=self.btnDescription_var, command=self.controller.toggle_description_view, width=10)
-        self.visDescriptionBTN.pack(side=tk.RIGHT, padx=(5, 0))
-
-        self.visNameBTN = ttk.Button(self.btn_frame_top, textvariable=self.btnName_var, command=self.controller.toggle_name_view, width=10)
-        self.visNameBTN.pack(side=tk.RIGHT, padx=(5, 0))
+        self.delete_btn.pack(side=tk.LEFT, padx=(15, 5))
+        
+        self.edit_btn = ttk.Button(self.btn_frame_top, text="編集", command=self._on_edit_clicked, width=11, style='Edit.TButton')
+        self.edit_btn.pack(side=tk.LEFT, padx=5)
 
         # === 2. 単語名行 ===
-        ttk.Label(main_frame, text="単語名 :", anchor='e').grid(row=1, column=0, sticky='ne', padx=5, pady=5)
+        ttk.Label(main_frame, text="単語名 :", anchor='e', font=('Arial', 11)).grid(row=2, column=0, sticky='ne', padx=5, pady=5)
         
         # 表示エリア
         self.name_display_frame = ttk.Frame(main_frame)
-        self.name_display_frame.grid(row=1, column=1, sticky='ew', padx=5, pady=5)
+        self.name_display_frame.grid(row=2, column=1, sticky='ew', padx=5, pady=5)
         
-        self.label_name = ttk.Label(self.name_display_frame, textvariable=self.wordName_var, font=("TkDefaultFont", 16, "bold"), wraplength=450)
+        self.label_name = ttk.Label(self.name_display_frame, textvariable=self.wordName_var, font=("Arial", 16, "bold"), wraplength=450)
         self.label_name.pack(side=tk.LEFT, fill='x', expand=True)
 
         # 編集エリア (初期非表示)
-        self.edit_name_entry = ttk.Entry(main_frame, textvariable=self._edit_name_var, font=("TkDefaultFont", 14))
+        self.edit_name_entry = ttk.Entry(main_frame, textvariable=self._edit_name_var, font=("Arial", 14))
 
         # === 3. 読み行 ===
-        ttk.Label(main_frame, text="読み(ひらがな) :", anchor='e').grid(row=2, column=0, sticky='e', padx=5, pady=5)
+        ttk.Label(main_frame, text="読み(ひらがな) :", anchor='e', font=('Arial', 11)).grid(row=3, column=0, sticky='e', padx=5, pady=5)
         
-        self.label_yomi = ttk.Label(main_frame, textvariable=self.wordYomi_var)
-        self.label_yomi.grid(row=2, column=1, sticky='w', padx=5, pady=5)
+        self.label_yomi = ttk.Label(main_frame, textvariable=self.wordYomi_var, font=('Arial', 11))
+        self.label_yomi.grid(row=3, column=1, sticky='w', padx=5, pady=5)
         
         self.edit_yomi_entry = ttk.Entry(
             main_frame,
             textvariable=self._edit_yomi_var,
             validate="key",
-            validatecommand=vcmd
+            validatecommand=vcmd,
+            font=('Arial', 11)
         )
 
         # === 4. 説明文エリア ===
         desc_label_frame = ttk.Frame(main_frame)
-        desc_label_frame.grid(row=3, column=0, sticky='ne', padx=5, pady=5)
-        ttk.Label(desc_label_frame, text="説明 :").pack(anchor='e')
+        desc_label_frame.grid(row=4, column=0, sticky='ne', padx=5, pady=5)
+        ttk.Label(desc_label_frame, text="説明 :", font=('Arial', 11)).pack(anchor='e')
         
         # 説明エリア
         desc_content_frame = ttk.Frame(main_frame)
-        desc_content_frame.grid(row=3, column=1, sticky='nsew', padx=5, pady=5)
-        main_frame.rowconfigure(3, weight=1) 
+        desc_content_frame.grid(row=4, column=1, sticky='nsew', padx=5, pady=5)
+        main_frame.rowconfigure(4, weight=1) 
 
         # 表示用テキスト
-        self.desc_text = tk.Text(desc_content_frame, wrap='word', height=8, width=40, bg="#f9f9f9", relief="flat")
+        self.desc_text = tk.Text(desc_content_frame, wrap='word', height=8, width=40, bg="#f9f9f9", relief="flat", font=('Arial', 11))
         self.desc_text.config(state='disabled')
         self.desc_text.pack(fill='both', expand=True)
 
         # 編集用テキスト (初期非表示)
-        self.edit_desc_text = tk.Text(desc_content_frame, wrap='word', height=8, width=40)
+        self.edit_desc_text = tk.Text(desc_content_frame, wrap='word', height=8, width=40, font=('Arial', 11))
 
         # === 5. タグ・カテコリエリア ===
         # タグ
-        ttk.Label(main_frame, text="タグ :", anchor='e').grid(row=4, column=0, sticky='e', padx=5, pady=5)
-        self.label_tag = ttk.Label(main_frame, textvariable=self.tag_var)
-        self.label_tag.grid(row=4, column=1, sticky='w', padx=5, pady=5)
-        self.edit_tag_combo = ttk.Combobox(main_frame, textvariable=self._edit_tag_var, state='normal')
+        ttk.Label(main_frame, text="タグ :", anchor='e', font=('Arial', 11)).grid(row=5, column=0, sticky='e', padx=5, pady=5)
+        self.label_tag = ttk.Label(main_frame, textvariable=self.tag_var, font=('Arial', 11))
+        self.label_tag.grid(row=5, column=1, sticky='w', padx=5, pady=5)
+        self.edit_tag_combo = ttk.Combobox(main_frame, textvariable=self._edit_tag_var, state='normal', font=('Arial', 11))
 
         # カテゴリ
-        ttk.Label(main_frame, text="カテゴリ :", anchor='e').grid(row=5, column=0, sticky='e', padx=5, pady=5)
-        self.label_category = ttk.Label(main_frame, textvariable=self.category_var)
-        self.label_category.grid(row=5, column=1, sticky='w', padx=5, pady=5)
-        self.edit_category_combo = ttk.Combobox(main_frame, textvariable=self._edit_category_var, state='normal')
+        ttk.Label(main_frame, text="カテゴリ :", anchor='e', font=('Arial', 11)).grid(row=6, column=0, sticky='e', padx=5, pady=5)
+        self.label_category = ttk.Label(main_frame, textvariable=self.category_var, font=('Arial', 11))
+        self.label_category.grid(row=6, column=1, sticky='w', padx=5, pady=5)
+        self.edit_category_combo = ttk.Combobox(main_frame, textvariable=self._edit_category_var, state='normal', font=('Arial', 11))
 
         # === 6. フッター (ナビゲーション & 保存) ===
         footer_frame = ttk.Frame(main_frame)
-        footer_frame.grid(row=6, column=0, columnspan=2, sticky='ew', pady=(20, 0))
+        footer_frame.grid(row=7, column=0, columnspan=2, sticky='ew', pady=(20, 0))
+        
+        # フッタースタイル
+        style.configure('Back.TButton', foreground='#3F7FF5', font=('Arial', 10, 'bold'))
+        style.configure('Nav.TButton', foreground='#34495E', font=('Arial', 10))
+        style.configure('Save.TButton', foreground='#27AE60', font=('Arial', 11, 'bold'))
 
-        self.goListBTN = ttk.Button(footer_frame, text="< 戻る", command=self.controller.handle_go_word_list)
+        self.goListBTN = ttk.Button(footer_frame, text="< 戻る", command=self.controller.handle_go_word_list, style='Back.TButton')
         self.goListBTN.pack(side=tk.LEFT)
 
         center_nav_frame = ttk.Frame(footer_frame)
         center_nav_frame.pack(side=tk.LEFT, expand=True)
-        self.backPageBTN = ttk.Button(center_nav_frame, text="前のページへ", command=self.controller.handle_previous_word)
+        self.backPageBTN = ttk.Button(center_nav_frame, text="前のページへ", command=self.controller.handle_previous_word, style='Nav.TButton')
         self.backPageBTN.pack(side=tk.LEFT, padx=5)
-        self.nextPageBTN = ttk.Button(center_nav_frame, text="次のページへ", command=self.controller.handle_next_word)
+        self.nextPageBTN = ttk.Button(center_nav_frame, text="次のページへ", command=self.controller.handle_next_word, style='Nav.TButton')
         self.nextPageBTN.pack(side=tk.LEFT, padx=5)
 
-        self.save_btn = ttk.Button(footer_frame, text="変更を保存", command=self._on_save_clicked)
+        self.save_btn = ttk.Button(footer_frame, text="変更を保存", command=self._on_save_clicked, style='Save.TButton')
 
     def update_data(self, name, description, yomi: str = "", tag: str = None, category: str = None):
         self.raw_name = name or ""
@@ -211,7 +225,7 @@ class WordbookView(tk.Frame):
 
     def exit_edit_mode(self):
         self.is_edit_mode = False
-        self.edit_btn.config(text="単語を編集")
+        self.edit_btn.config(text="編集")
         self._exit_edit_widgets()
 
     def _enter_edit_widgets(self):
@@ -241,26 +255,25 @@ class WordbookView(tk.Frame):
 
         # 切り替え: 単語名
         self.name_display_frame.grid_remove()
-        self.edit_name_entry.grid(row=1, column=1, sticky='ew', padx=5, pady=5)
+        self.edit_name_entry.grid(row=2, column=1, sticky='ew', padx=5, pady=5)
         # 修正: 単語名も編集可能にするため state='normal' (デフォルト) に戻す
         self.edit_name_entry.config(state='normal')
 
         # 切り替え: 読み
         self.label_yomi.grid_remove()
-        self.edit_yomi_entry.grid(row=2, column=1, sticky='ew', padx=5, pady=5)
+        self.edit_yomi_entry.grid(row=3, column=1, sticky='ew', padx=5, pady=5)
 
-        # 切り替え: 説明 (トグルボタンも隠す)
-        self.visDescriptionBTN.pack_forget()
+        # 切り替え: 説明
         self.desc_text.pack_forget()
         self.edit_desc_text.pack(fill='both', expand=True)
 
         # 切り替え: タグ
         self.label_tag.grid_remove()
-        self.edit_tag_combo.grid(row=4, column=1, sticky='ew', padx=5, pady=5)
+        self.edit_tag_combo.grid(row=5, column=1, sticky='ew', padx=5, pady=5)
 
         # 切り替え: カテゴリ
         self.label_category.grid_remove()
-        self.edit_category_combo.grid(row=5, column=1, sticky='ew', padx=5, pady=5)
+        self.edit_category_combo.grid(row=6, column=1, sticky='ew', padx=5, pady=5)
 
         # 保存ボタン表示
         self.save_btn.pack(side=tk.RIGHT)
@@ -282,7 +295,6 @@ class WordbookView(tk.Frame):
 
         # 説明
         self.edit_desc_text.pack_forget()
-        self.visDescriptionBTN.pack(anchor='w', pady=(0, 5))
         self.desc_text.pack(fill='both', expand=True)
 
         # タグ

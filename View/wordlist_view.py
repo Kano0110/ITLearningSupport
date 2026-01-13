@@ -52,14 +52,14 @@ class WordListView:
 
     def _create_navigation_buttons(self):
         """ナビゲーションボタン（Home、WordEntry）を作成"""
-        nav_frame = tk.Frame(self.frame, bg='#2C3E50')
+        nav_frame = tk.Frame(self.frame, bg='#418BDF')
         nav_frame.pack(fill='x', ipady=5, padx=40, pady=(20, 0))
         
         # タイトルラベル（中央配置）
         title_label = tk.Label(
             nav_frame,
             text="単語一覧",
-            bg='#2C3E50',
+            bg="#418BDF",
             fg='white',
             font=('Arial', 18, 'bold')
         )
@@ -69,15 +69,15 @@ class WordListView:
         button_frame = tk.Frame(self.frame)
         button_frame.pack(fill='x', pady=20)
         
-        # ボタンを中央に配置するためのサブフレーム
+        # ボタンを中央に配置するためのサブフレームQ
         center_buttons = ttk.Frame(button_frame)
         center_buttons.pack(expand=True)
         
         # スタイル設定
         style = ttk.Style()
         style.configure('Home.TButton', foreground="#3F7FF5", font=('Arial', 11, 'bold'))
-        style.configure('Quiz.TButton', foreground="#E67E22", font=('Arial', 11, 'bold'))
-        style.configure('Entry.TButton', foreground="#466102", font=('Arial', 11, 'bold'))
+        style.configure('Quiz.TButton', foreground="#D33B3B", font=('Arial', 11, 'bold'))
+        style.configure('Entry.TButton', foreground="#49AD28", font=('Arial', 11, 'bold'))
         
         
         buttons = [
