@@ -185,7 +185,8 @@ class AppController:
         # switch_view に引数を渡すように統一
         self.switch_view("wordbook", word_name=word_name)
 
-    def start_quiz(self, term_list, mode: str = "hide_word", num_questions: int = 10):
+    def start_quiz(self, term_list, mode: str = "hide_word", num_questions: int = 10,selected_tags=None,
+    selected_categories=None):
         try:
             from Controller.Q_quiz_Controller import Q_Quiz_Controller
             quiz_model = self._get_quiz_model()
@@ -206,7 +207,7 @@ class AppController:
 
             # 修正：Q_SelectController から渡された mode を使う
             if hasattr(quiz_ctrl, "start"):
-                quiz_ctrl.start(selected_terms=term_list, mode=mode, num_questions=num_questions)
+                quiz_ctrl.start(selected_terms=term_list, mode=mode, num_questions=num_questions,selected_tags=selected_tags,selected_categories=selected_categories)
             elif hasattr(quiz_ctrl, "start_quiz"):
                 quiz_ctrl.start_quiz(term_list)
 
