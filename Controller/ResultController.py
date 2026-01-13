@@ -90,6 +90,8 @@ class ResultController:
         quiz.start(
         selected_terms=self.selected_terms,
         mode=self.mode,
-        num_questions=self.num_questions
+        num_questions=self.num_questions,
+        selected_tags=self.tag,                 
+        selected_categories=self.category  
         )
  
