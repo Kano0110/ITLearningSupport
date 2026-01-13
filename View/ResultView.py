@@ -45,11 +45,11 @@ class ResultView:
         labelframe = tk.LabelFrame(self.frame, text="絞り込み条件", labelanchor="n", width=300, height=100, font=my_font)
         labelframe.place(x=60, y=160)
  
-        ttk.Label(labelframe, text='カテゴリ：').grid(row=0, column=0, padx=10, pady=5)
+        ttk.Label(labelframe, text='タグ：').grid(row=0, column=0, padx=10, pady=5)
         self.listCategoryName = tk.Listbox(labelframe)
         self.listCategoryName.grid(row=1, column=1, padx=10, pady=5)
  
-        ttk.Label(labelframe, text='タグ：').grid(row=0, column=1, padx=10, pady=5)
+        ttk.Label(labelframe, text='カテゴリ：').grid(row=0, column=1, padx=10, pady=5)
         self.listTagName = tk.Listbox(labelframe)
         self.listTagName.grid(row=1, column=0, padx=10, pady=5)
  
