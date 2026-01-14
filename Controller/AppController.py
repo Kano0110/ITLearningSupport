@@ -3,6 +3,10 @@ import traceback # デバッグ用
 
 class AppController:
     """アプリケーション全体の画面遷移を統括するメインコントローラー"""
+
+    def start(self):
+        print("srtart called")
+
     def __init__(self, root, db_path=None):
         self.root = root
         self.root.geometry("600x520")

@@ -4,6 +4,18 @@ import tkinter as tk
 from tkinter import ttk
 from PIL import Image, ImageTk
 import os
+import sys
+
+def get_resource_path(filename: str) -> str:
+    """
+    リソースファイルのパスを取得
+    start.py の RESOURCE_DIR に合わせる
+    """
+    if getattr(sys, 'frozen', False):
+        base_dir = os.path.dirname(sys.executable)
+    else:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_dir, filename)
 
 class HomeView(tk.Frame):
     """HOME画面ビュー（背景画像表示・ボタン配置）"""
@@ -14,7 +26,6 @@ class HomeView(tk.Frame):
     MIN_FALLBACK_HEIGHT = 600
     MIN_SIZE_THRESHOLD = 10
     RESAMPLE_FILTER = Image.Resampling.LANCZOS
-    BG_IMAGE_NAMES = ['green-sky.jpg', os.path.join('resources', 'green-sky.jpg')]
     FALLBACK_BG_COLOR = '#E8F4F8'
     ERROR_BG_COLOR = '#47BFFB'
     
@@ -76,7 +87,14 @@ class HomeView(tk.Frame):
     
     def _find_background_image(self) -> str | None:
         """背景画像ファイルを探索"""
-        for path in self.BG_IMAGE_NAMES:
+        # start.py の定義に合わせてパスを構築
+        candidates = [
+            get_resource_path('green-sky.jpg'),
+            get_resource_path(os.path.join('resources', 'green-sky.jpg')),
+            'green-sky.jpg',
+            os.path.join('resources', 'green-sky.jpg')
+        ]
+        for path in candidates:
             if os.path.exists(path):
                 return path
         return None
