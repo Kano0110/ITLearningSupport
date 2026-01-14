@@ -30,20 +30,20 @@ class ResultView:
  
         # 正解数と正解率（初期は空）
         self.labelCorrect = ttk.Label(self.frame, text="", font=self.Correct_font)
-        self.labelCorrect.place(x=60, y=40)
+        self.labelCorrect.place(x=60, y=30)
  
         self.labelPercent = ttk.Label(self.frame, text="", font=self.Correct_font)
-        self.labelPercent.place(x=370, y=38)
+        self.labelPercent.place(x=370, y=28)
 
         # 経過時間
         """まだ制作中"""
         self.labelTime = ttk.Label(self.frame, text="", font=self.Correct_font)
-        self.labelTime.place(x=60, y=100)
+        self.labelTime.place(x=60, y=90)
 
  
         # 絞り込み条件
         labelframe = tk.LabelFrame(self.frame, text="絞り込み条件", labelanchor="n", width=300, height=100, font=my_font)
-        labelframe.place(x=60, y=160)
+        labelframe.place(x=60, y=150)
  
         ttk.Label(labelframe, text='タグ：').grid(row=0, column=0, padx=10, pady=5)
         self.listCategoryName = tk.Listbox(labelframe)
@@ -54,20 +54,20 @@ class ResultView:
         self.listTagName.grid(row=1, column=0, padx=10, pady=5)
  
         # ボタン
-        button_list = ttk.Button(self.frame, text='単語一覧に戻る', command=self.controller.return_wordlist)
-        button_question = ttk.Button(self.frame, text='出題形式選択へ戻る', command=self.controller.return_qselect)
-        button_again = ttk.Button(self.frame, text='同じ条件でもう一度解く', command=self.controller.redo_quiz)
+        button_list = ttk.Button(self.frame, text='単語一覧に戻る',width=20, command=self.controller.return_wordlist)
+        button_question = ttk.Button(self.frame, text='出題形式選択へ戻る',width=20, command=self.controller.return_qselect)
+        button_again = ttk.Button(self.frame, text='同じ条件でもう一度解く',width=20, command=self.controller.redo_quiz)
 
-        button_list.place(x=70, y=430)
-        button_question.place(x=200, y=430)
-        button_again.place(x=400, y=430)
+        button_list.place(x=70, y=415)
+        button_question.place(x=70, y=470)
+        button_again.place(x=400, y=470)
  
         # 間違えた問題リスト
         labelWrong = ttk.Label(self.frame, text="間違えた問題", font=Wrong_font)
-        labelWrong.place(x=380, y=160)
+        labelWrong.place(x=380, y=150)
  
         self.listboxWrong = tk.Listbox(self.scrollbar_frame)
-        self.scrollbar_frame.place(x=380, y=180)
+        self.scrollbar_frame.place(x=380, y=170)
         self.listboxWrong.pack(side=tk.LEFT)
  
         scroll_bar = tk.Scrollbar(self.scrollbar_frame, command=self.listboxWrong.yview)
