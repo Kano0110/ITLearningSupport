@@ -3,17 +3,20 @@ Model層: データベース接続の共通ロジック
 """
 import sqlite3
 import os
+import sys
 from typing import Optional
 from contextlib import contextmanager
 
-DB_FILE = "word_master.db"
-
-# DBパス候補
-DB_CANDIDATES = [
-    os.path.join(os.path.dirname(__file__), '..', DB_FILE),  # プロジェクトルート (IT/)
-    os.path.join(os.path.dirname(__file__), DB_FILE),        # Model/
-    DB_FILE                                                  # カレントディレクトリ
-]
+def get_db_path() -> str:
+    """
+    DB パスを取得
+    start.py の定義に合わせる
+    """
+    if getattr(sys, 'frozen', False):
+        base_dir = os.path.dirname(sys.executable)
+    else:
+        base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    return os.path.join(base_dir, "word_master.db")
 
 class BaseModel:
     """
@@ -24,18 +27,11 @@ class BaseModel:
         if db_path:
             self.db_path = db_path
         else:
-            self.db_path = self._find_db_path()
+            # start.py の定義に合わせる
+            self.db_path = get_db_path()
 
-        if not self.db_path:
-            print("エラー: データベースファイル 'word_master.db' が見つかりません。")
-
-    def _find_db_path(self) -> Optional[str]:
-        """DBファイルのパスを検索"""
-        for p in DB_CANDIDATES:
-            abs_p = os.path.abspath(p)
-            if os.path.exists(abs_p):
-                return abs_p
-        return None
+        if not os.path.exists(self.db_path):
+            print(f"警告: データベースが見つかりません: {self.db_path}")
 
     def get_conn(self) -> Optional[sqlite3.Connection]:
         """
