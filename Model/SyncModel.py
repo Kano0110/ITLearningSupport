@@ -47,8 +47,8 @@ class SyncModel(BaseModel):
         except Exception as e:
             return {'success': False, 'error': f"通信エラー: {str(e)}"}
 
-    def login(self, username, password) -> bool:
-        """ログインしてトークン取得"""
+    def login(self, username, password) -> tuple:
+        """ログインしてトークン取得。(成功フラグ, エラーメッセージ) のタプルを返す"""
         try:
             response = requests.post(
                 f"{self.SERVER_URL}/auth/login",
@@ -59,14 +59,16 @@ class SyncModel(BaseModel):
             if response.status_code == 200:
                 data = response.json()
                 self.token = data.get('token')
-                return True
+                return (True, None)
             else:
-                print(f"Server Login Failed: {response.text}")
-                return False
+                error_msg = f"サーバーログイン失敗: {response.text}"
+                print(error_msg)
+                return (False, error_msg)
                 
         except Exception as e:
-            print(f"Connection error: {e}")
-            return False
+            error_msg = f"サーバー接続エラー: {str(e)}"
+            print(error_msg)
+            return (False, error_msg)
 
     def upload_data(self, target_uuids: list = None) -> Dict:
         """ローカルデータをサーバーへアップロード"""
