@@ -200,6 +200,8 @@ class AppController:
 
             quiz_ctrl = Q_Quiz_Controller(self, quiz_model)
 
+            self._controller_cache["quiz"] = quiz_ctrl
+
             if self.current_controller:
                 try:
                     self.current_controller.hide()
