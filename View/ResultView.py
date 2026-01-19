@@ -45,11 +45,11 @@ class ResultView:
         labelframe = tk.LabelFrame(self.frame, text="絞り込み条件", labelanchor="n", width=300, height=100, font=my_font)
         labelframe.place(x=60, y=150)
  
-        ttk.Label(labelframe, text='タグ：').grid(row=0, column=0, padx=10, pady=5)
+        ttk.Label(labelframe, text='カテゴリ：').grid(row=0, column=0, padx=10, pady=5)
         self.listCategoryName = tk.Listbox(labelframe)
         self.listCategoryName.grid(row=1, column=1, padx=10, pady=5)
  
-        ttk.Label(labelframe, text='カテゴリ：').grid(row=0, column=1, padx=10, pady=5)
+        ttk.Label(labelframe, text='タグ：').grid(row=0, column=1, padx=10, pady=5)
         self.listTagName = tk.Listbox(labelframe)
         self.listTagName.grid(row=1, column=0, padx=10, pady=5)
  
@@ -57,10 +57,12 @@ class ResultView:
         button_list = ttk.Button(self.frame, text='単語一覧に戻る',width=20, command=self.controller.return_wordlist)
         button_question = ttk.Button(self.frame, text='出題形式選択へ戻る',width=20, command=self.controller.return_qselect)
         button_again = ttk.Button(self.frame, text='同じ条件でもう一度解く',width=20, command=self.controller.redo_quiz)
+        button_check = ttk.Button(self.frame,text="見直し問題を解く", width=20, command=self.controller.start_review_quiz)
 
         button_list.place(x=70, y=415)
         button_question.place(x=70, y=470)
         button_again.place(x=400, y=470)
+        button_check.place(x=400, y=415)
  
         # 間違えた問題リスト
         labelWrong = ttk.Label(self.frame, text="間違えた問題", font=Wrong_font)

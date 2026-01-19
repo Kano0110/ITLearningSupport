@@ -60,21 +60,25 @@ class Q_Quiz_View(tk.Frame):
         self.choice_buttons = []
 
         # === 結果・操作エリア ===
-        bottom_frame = ttk.Frame(self)
-        bottom_frame.grid(row=3, column=0, sticky="ew", padx=20, pady=20)
-        bottom_frame.columnconfigure(0, weight=1)
-        bottom_frame.columnconfigure(2, weight=1)
+        self.bottom_frame = ttk.Frame(self)
+        self.bottom_frame.grid(row=3, column=0, sticky="ew", padx=20, pady=20)
+        self.bottom_frame.columnconfigure(0, weight=1)
+        self.bottom_frame.columnconfigure(1, weight=1)
+        self.bottom_frame.columnconfigure(2, weight=1)
 
         # 結果メッセージ
-        self.result_label = ttk.Label(bottom_frame, text="", font=("TkDefaultFont", 14, "bold"))
+        self.result_label = ttk.Label(self.bottom_frame, text="", font=("TkDefaultFont", 14, "bold"))
         self.result_label.grid(row=0, column=0, columnspan=3, pady=(0, 15))
 
-        # ボタン配置（左右対称にするためグリッドを使用）
-        self.finish_btn = ttk.Button(bottom_frame, text="回答を終了する", command=self.controller.finish_quiz, width=15)
-        self.finish_btn.grid(row=1, column=0, sticky="w") # 左寄せ
+        # ボタン
+        self.finish_btn = ttk.Button(self.bottom_frame, text="回答を終了する",
+                                    command=self.controller.finish_quiz, width=15)
+        self.finish_btn.grid(row=1, column=0, sticky="w")
 
-        self.next_btn = ttk.Button(bottom_frame, text="次の問題へ", command=self.controller.next_question, width=15)
-        self.next_btn.grid(row=1, column=2, sticky="e") # 右寄せ
+        self.next_btn = ttk.Button(self.bottom_frame, text="次の問題へ",
+                                command=lambda: self.controller.next_question(self.review_var.get()),
+                                width=15)
+        self.next_btn.grid(row=1, column=2, sticky="e")
 
     def _on_label_configure(self, event):
         """ラベルのサイズ変更イベントで折り返し幅を更新"""
@@ -177,6 +181,15 @@ class Q_Quiz_View(tk.Frame):
                 # 自分が選んだ間違った選択肢
                 btn.config(text=f"✖あなたの回答 {original_text}")
 
+        # 見直し用チェックボックス表示
+        self.review_var = tk.BooleanVar()
+        self.review_check = ttk.Checkbutton(
+            self.bottom_frame,
+            text="この問題を後で見直す",
+            variable=self.review_var
+        )
+        self.review_check.grid(row=0, column=2, sticky="e", padx=(0, 10))
+
         # 次へ／終了ボタンを表示
         self.next_btn.grid()
         self.finish_btn.grid()
@@ -188,6 +201,9 @@ class Q_Quiz_View(tk.Frame):
         # ボタンを隠す
         self.next_btn.grid_remove()
         self.finish_btn.grid_remove()
+        # チェックボックスを隠す
+        if hasattr(self, "review_check"):
+           self.review_check.grid_remove()
 
 # --- ツールチップ用クラス ---
 class ToolTip:
