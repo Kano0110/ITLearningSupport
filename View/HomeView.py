@@ -59,6 +59,18 @@ class HomeView(tk.Frame):
     
     def _create_navigation_buttons(self):
         """ナビゲーションボタンを作成"""
+        #新規追加
+
+        auth_button = ttk.Button(
+            self, 
+            text="ログイン / 新規登録",
+            command=self.controller.root_controller.go_to_auth 
+            # ※ HomeController経由で呼ぶ場合はHomeControllerにメソッドを追加してください
+        )
+        auth_button.pack(pady=12, ipadx=26, ipady=6)
+        
+        #新規追加ここまで
+
         wordlist_button = ttk.Button(
             self, 
             text="単語一覧",
