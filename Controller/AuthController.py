@@ -36,15 +36,18 @@ class AuthController:
             # 2. サーバー接続確認 (自己修復ロジック)
             # ローカルOKなら、サーバーにもそのユーザーがいるか確認する
             sync_model = SyncModel(self.app.db_path)
-            if not sync_model.login(login_id, password):
+            success, error_msg = sync_model.login(login_id, password)
+            if not success:
                 print(f"DEBUG: サーバーログイン失敗。未登録の可能性があるため、サーバーへの自動登録を試みます: {login_id}")
                 
                 # サーバーに登録を試みる
                 reg_result = sync_model.register_user_to_server(login_id, password)
                 if reg_result['success']:
                     print("DEBUG: サーバーへの自動登録成功")
+                    messagebox.showinfo("情報", "ローカルアカウントを作成しました。\nサーバーに自動登録されました。")
                 else:
-                    print(f"DEBUG: サーバーへの自動登録失敗: {reg_result.get('error')}")
+                    warning_msg = f"ローカルアカウントは作成されました。\nただし、サーバー登録に失敗しました:\n{reg_result.get('error')}"
+                    messagebox.showwarning("警告", warning_msg)
                     # ここで失敗しても、とりあえずローカルログインは成功しているので進ませる
             
             messagebox.showinfo("成功", f"ようこそ、{login_id}さん！")
@@ -75,11 +78,12 @@ class AuthController:
             sync_model = SyncModel(self.app.db_path)
             server_result = sync_model.register_user_to_server(login_id, password)
             
-            msg = "登録が完了しました！"
-            if not server_result['success']:
-                msg += f"\n(サーバー登録のみ失敗: {server_result.get('error')})"
-            
-            messagebox.showinfo("成功", msg)
+            if server_result['success']:
+                msg = "登録が完了しました！\nサーバーにも登録されました。"
+                messagebox.showinfo("成功", msg)
+            else:
+                msg = f"ローカルアカウントは作成されました。\nただし、サーバー登録に失敗しました:\n{server_result.get('error')}"
+                messagebox.showwarning("警告", msg)
             
             if hasattr(self.app, 'go_to_sync'):
                 self.app.go_to_sync(login_id, password)
