@@ -1,6 +1,5 @@
 #AppController.py
 import traceback # デバッグ用
-from View.AuthView import AuthView  # 新規追加
 
 class AppController:
     """アプリケーション全体の画面遷移を統括するメインコントローラー"""
@@ -13,11 +12,6 @@ class AppController:
         self.root.geometry("600x520")
         self.current_controller = None
         self.db_path = db_path
-
-        #新規追加
-        # AuthView(ログイン画面)のインスタンス保持用
-        self.auth_view = None
-        # 新規追加ここまで
 
         # 直前のビュー名を保持（Wordbook→Wordlistのときだけフィルタを維持する）
         self._last_view_name = None
@@ -148,20 +142,7 @@ class AppController:
      #<新規追加>
     def go_to_auth(self):
         """ログイン/登録画面へ遷移"""
-        if self.current_controller:
-            try:
-                self.current_controller.hide()
-            except:
-                pass
-        
-        if self.auth_view is None:
-            self.auth_view = AuthView(self.root, self)
-            
-        self.auth_view.show()
-        self.root.title("WordBook - Login / Sign Up")
-        
-        # 現在のコントローラー参照を更新（hide用）
-        self.current_controller = self.auth_view
+        # AuthController経由で画面遷移
         self.switch_view("auth")
 
     def go_to_sync(self, username=None, password=None):
