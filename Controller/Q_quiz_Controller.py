@@ -18,7 +18,8 @@ class Q_Quiz_Controller:
         self.current_index: int = 0
         self.correct_count: int = 0
         self.quiz_data: List[dict] = []
-        self.wronged_terms: List[dict] = []
+        self.wronged_terms: List[dict] = [] #間違えた単語
+        self.review_terms = []              #見直しチェックをした単語
 
     def show(self):
         """AppController から呼ばれる表示処理"""
@@ -137,8 +138,13 @@ class Q_Quiz_Controller:
 
         self.view.show_result(is_correct, correct_term, selected)
 
-    def next_question(self):
+    def next_question(self, review_flag=False):
         """次の問題へ進む"""
+
+        if review_flag:     # チェックされていたら保存
+            term = self.quiz_data[self.current_index]["term"]
+            self.review_terms.append(term["id"])
+
         self.current_index += 1
         if self.current_index < len(self.quiz_data):
             self._show_current_question()

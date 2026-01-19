@@ -134,3 +134,24 @@ class Q_Quiz_Model(BaseModel):
                 conn.commit()
         except Exception as e:
             print(f"Error recording answer: {e}")
+
+    def get_term_detail_by_id(self, term_id: int):
+        """ID から単語詳細を取得する"""
+        with self.get_conn() as conn:
+            cur = conn.execute("""
+                SELECT id, word_name, explain, tag, category
+                FROM terms
+                WHERE id = ?
+            """, (term_id,))
+            row = cur.fetchone()
+
+        if not row:
+            return None
+
+        return {
+            "id": row[0],
+            "name": row[1],
+            "desc": row[2],
+            "tag": row[3],
+            "category": row[4]
+        }
