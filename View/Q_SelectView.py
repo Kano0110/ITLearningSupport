@@ -32,6 +32,10 @@ class Q_SelectView:
         self.tags_canvas = None
         self.categories_canvas = None
         
+        # ボタンへの参照
+        self.select_all_tags_button = None
+        self.select_all_categories_button = None
+        
         # UI を構築
         self._build_ui()
         
@@ -47,14 +51,14 @@ class Q_SelectView:
 
     def _create_title(self):
         """タイトルエリアを作成"""
-        title_frame = tk.Frame(self.frame, bg='#4A90E2')
+        title_frame = tk.Frame(self.frame, bg='#E67E22')
         title_frame.pack(fill='x', pady=15, padx=15)
         
         title_label = tk.Label(
             title_frame,
             text="出題形式選択",
             font=('Arial', 18, 'bold'),
-            bg='#4A90E2',
+            bg='#E67E22',
             fg='white'
         )
         title_label.pack(pady=5)
@@ -129,15 +133,14 @@ class Q_SelectView:
         style.configure('SelectCat.TButton', foreground='#5BC0DE')
         
         
-        buttons = [
-            ("全て解除", self._on_clear_all_click, 13, 'Clear.TButton'),
-            ("タグ全選択", self._on_select_all_tags_click, 13, 'SelectTag.TButton'),
-            ("カテゴリ全選択", self._on_select_all_categories_click, 13, 'SelectCat.TButton')
-        ]
+        clear_btn = ttk.Button(ops_frame, text="全て解除", command=self._on_clear_all_click, width=13, style='Clear.TButton')
+        clear_btn.pack(side='left', padx=(0, 8), pady=3)
         
-        for text, command, width, style_name in buttons:
-            btn = ttk.Button(ops_frame, text=text, command=command, width=width, style=style_name)
-            btn.pack(side='left', padx=(0, 8), pady=3)
+        self.select_all_tags_button = ttk.Button(ops_frame, text="タグ全選択", command=self._on_select_all_tags_click, width=13, style='SelectTag.TButton')
+        self.select_all_tags_button.pack(side='left', padx=(0, 8), pady=3)
+        
+        self.select_all_categories_button = ttk.Button(ops_frame, text="カテゴリ全選択", command=self._on_select_all_categories_click, width=13, style='SelectCat.TButton')
+        self.select_all_categories_button.pack(side='left', padx=(0, 8), pady=3)
 
     def _create_summary_label(self, parent: ttk.Frame):
         """サマリー表示ラベルを作成"""
@@ -319,12 +322,22 @@ class Q_SelectView:
         self.controller.clear_all()
 
     def _on_select_all_tags_click(self):
-        """タグ全選択ボタンクリック時の処理"""
-        self.controller.select_all_tags()
+        """タグ全選択/全解除ボタンクリック時の処理"""
+        # 現在のボタンテキストで判定して動作を切り替える
+        button_text = self.select_all_tags_button.cget('text')
+        if button_text == "タグ全選択":
+            self.controller.select_all_tags()
+        else:  # "タグ全解除"
+            self.controller.clear_all_tags()
 
     def _on_select_all_categories_click(self):
-        """カテゴリ全選択ボタンクリック時の処理"""
-        self.controller.select_all_categories()
+        """カテゴリ全選択/全解除ボタンクリック時の処理"""
+        # 現在のボタンテキストで判定して動作を切り替える
+        button_text = self.select_all_categories_button.cget('text')
+        if button_text == "カテゴリ全選択":
+            self.controller.select_all_categories()
+        else:  # "カテゴリ全解除"
+            self.controller.clear_all_categories()
 
     def _on_state_changed(self, terms: list[str], summary_text: str, 
                          selected_tags: set[str], selected_categories: set[str]):
@@ -341,6 +354,39 @@ class Q_SelectView:
         for cat, var in self.category_vars.items():
             var.set(cat in selected_categories)
         self.summary_label.config(text=summary_text)
+        
+        # ボタンの状態を更新
+        self._update_select_all_buttons(selected_tags, selected_categories)
+    
+    def _update_select_all_buttons(self, selected_tags: set[str], selected_categories: set[str]):
+        """タグ・カテゴリの選択状態に基づいてボタンのテキストと動作を切り替える
+        
+        Args:
+            selected_tags: 選択中のタグセット
+            selected_categories: 選択中のカテゴリセット
+        """
+        if self.select_all_tags_button is None or self.select_all_categories_button is None:
+            return
+        
+        # 利用可能なタグ・カテゴリの取得（文字列に統一）
+        available_tags = set(str(tag) for tag in self.controller.get_available_tags())
+        available_categories = set(str(cat) for cat in self.controller.get_available_categories())
+        
+        # 選択値を文字列に統一
+        selected_tags_str = set(str(tag) for tag in selected_tags)
+        selected_categories_str = set(str(cat) for cat in selected_categories)
+        
+        # タグボタンの状態更新
+        if available_tags and selected_tags_str == available_tags:
+            self.select_all_tags_button.config(text="タグ全解除")
+        else:
+            self.select_all_tags_button.config(text="タグ全選択")
+        
+        # カテゴリボタンの状態更新
+        if available_categories and selected_categories_str == available_categories:
+            self.select_all_categories_button.config(text="カテゴリ全解除")
+        else:
+            self.select_all_categories_button.config(text="カテゴリ全選択")
 
     def refresh_tag_category_options(self):
         """タグとカテゴリのチェックボックスリストを再構築（新規追加データ反映用）"""
