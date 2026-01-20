@@ -1,16 +1,13 @@
 # Controller/AuthController.py
 from tkinter import messagebox
-from Model.AuthModel import AuthModel
 from View.AuthView import AuthView
-# SyncModelが必要なのでインポート
 from Model.SyncModel import SyncModel 
 
 class AuthController:
     """認証画面のコントローラ"""
     
-    def __init__(self, app_controller, model: AuthModel = None):
+    def __init__(self, app_controller):
         self.app = app_controller
-        self.model = model if model else AuthModel()
         self.view = None
         self.reset_view = None
 
@@ -25,44 +22,28 @@ class AuthController:
         if self.reset_view: self.reset_view.hide()
 
     def login(self, login_id, password):
-        """ログイン処理（サーバー自動登録機能付き）"""
+        """ログイン処理（サーバー認証優先）"""
         if not login_id or not password:
             messagebox.showwarning("入力エラー", "IDとパスワードを入力してください。")
             return
 
-        # 1. ローカルDB (SQLite) でログイン確認
-        if self.model.login_user(login_id, password):
-            
-            # 2. サーバー接続確認 (自己修復ロジック)
-            # ローカルOKなら、サーバーにもそのユーザーがいるか確認する
-            sync_model = SyncModel(self.app.db_path)
-            success, error_msg = sync_model.login(login_id, password)
-            if not success:
-                print(f"DEBUG: サーバーログイン失敗。未登録の可能性があるため、サーバーへの自動登録を試みます: {login_id}")
-                
-                # サーバーに登録を試みる
-                reg_result = sync_model.register_user_to_server(login_id, password)
-                if reg_result['success']:
-                    print("DEBUG: サーバーへの自動登録成功")
-                    messagebox.showinfo("情報", "ローカルアカウントを作成しました。\nサーバーに自動登録されました。")
-                else:
-                    warning_msg = f"ローカルアカウントは作成されました。\nただし、サーバー登録に失敗しました:\n{reg_result.get('error')}"
-                    messagebox.showwarning("警告", warning_msg)
-                    # ここで失敗しても、とりあえずローカルログインは成功しているので進ませる
-            
+        # サーバーで直接認証
+        sync_model = SyncModel(self.app.db_path)
+        success, error_msg = sync_model.login(login_id, password)
+        
+        if success:
             messagebox.showinfo("成功", f"ようこそ、{login_id}さん！")
             
-            # 3. 同期画面へ遷移
+            # 同期画面へ遷移
             if hasattr(self.app, 'go_to_sync'):
                 self.app.go_to_sync(login_id, password)
             else:
                 self.app.switch_view("sync")
-                
         else:
-            messagebox.showerror("エラー", "IDまたはパスワードが間違っています。")
+            messagebox.showerror("ログイン失敗", f"ログインに失敗しました:\n{error_msg}")
 
     def signup(self, login_id, password):
-        """新規登録処理"""
+        """新規登録処理（サーバーのみ）"""
         if not login_id or not password:
             messagebox.showwarning("入力エラー", "IDとパスワードを入力してください。")
             return
@@ -71,26 +52,19 @@ class AuthController:
             messagebox.showwarning("入力エラー", "パスワードは4文字以上にしてください。")
             return
 
-        # 1. ローカルDB登録
-        if self.model.register_user(login_id, password):
-            
-            # 2. サーバーDB登録
-            sync_model = SyncModel(self.app.db_path)
-            server_result = sync_model.register_user_to_server(login_id, password)
-            
-            if server_result['success']:
-                msg = "登録が完了しました！\nサーバーにも登録されました。"
-                messagebox.showinfo("成功", msg)
-            else:
-                msg = f"ローカルアカウントは作成されました。\nただし、サーバー登録に失敗しました:\n{server_result.get('error')}"
-                messagebox.showwarning("警告", msg)
+        # サーバーに直接登録
+        sync_model = SyncModel(self.app.db_path)
+        server_result = sync_model.register_user_to_server(login_id, password)
+        
+        if server_result['success']:
+            messagebox.showinfo("成功", "登録が完了しました！")
             
             if hasattr(self.app, 'go_to_sync'):
                 self.app.go_to_sync(login_id, password)
             else:
                 self.app.switch_view("sync")
         else:
-            messagebox.showerror("エラー", "このIDは既に使用されています。")
+            messagebox.showerror("登録失敗", f"登録に失敗しました:\n{server_result.get('error')}")
 
     def go_to_home(self):
         self.app.switch_view("home")
