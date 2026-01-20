@@ -42,12 +42,6 @@ class AppController:
     # --- モデルファクトリ ---
 
     # 新規追加
-    def _get_auth_model(self):
-        if "auth" not in self._models:
-            from Model.AuthModel import AuthModel
-            self._models["auth"] = AuthModel(db_path=self.db_path)
-        return self._models["auth"]
-    
     def _get_sync_model(self):
         if "sync" not in self._models:
             from Model.SyncModel import SyncModel
@@ -104,7 +98,7 @@ class AppController:
     # 新規追加
     def _create_auth_controller(self):
         from Controller.AuthController import AuthController
-        return AuthController(self, self._get_auth_model())
+        return AuthController(self)
 
     def _create_sync_controller(self):
         from Controller.SyncController import SyncController
