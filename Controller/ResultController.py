@@ -2,6 +2,7 @@
 from typing import Optional
 from Model.ResultModel import ResultModel
 import tkinter as tk
+from tkinter import messagebox
 import math
  
 class ResultController:
@@ -36,7 +37,6 @@ class ResultController:
         """現在のビューを非表示にする（AppController が呼ぶ）。"""
         if self.view and hasattr(self.view, "close"):
             self.view.close()
-           
             
     def set_result(self, correct_count, total_questions, category, tag, wronged_terms, mode, selected_terms, num_questions, elapsed_time=None):
         self._ensure_view()
@@ -79,19 +79,60 @@ class ResultController:
         self.app.switch_view("qselect")
  
     def redo_quiz(self):
-        """同じ条件でもう一度解く（暫定）"""
-        quiz = self.app._create_quiz_controller()  # 新しい quiz controller を作る
+        """同じ条件でもう一度解く"""
+        # 新しい quiz controller を作る
+        quiz = self.app._create_quiz_controller()
 
-    # 画面切り替え
+        # 現在の画面を閉じる
         self.app.current_controller.hide()
+
+        # コントローラを差し替え
         self.app.current_controller = quiz
         quiz.show()
 
+        # 同じ条件でクイズを開始
         quiz.start(
-        selected_terms=self.selected_terms,
-        mode=self.mode,
-        num_questions=self.num_questions,
-        selected_tags=self.tag,                 
-        selected_categories=self.category  
+            selected_terms=self.selected_terms,
+            mode=self.mode,
+            num_questions=self.num_questions,
+            selected_tags=self.tag,
+            selected_categories=self.category
         )
- 
+
+    def start_review_quiz(self):
+        """見直し対象の問題だけで再クイズを開始する"""
+
+        # Q_Quiz_Controller が保持している review_terms を取得
+        quiz_ctrl = self.app._controller_cache.get("quiz")
+
+        if not quiz_ctrl or not getattr(quiz_ctrl, "review_terms", None):
+            messagebox.showinfo("見直し問題", "見直し対象の問題がありません。")
+            return
+
+        # term_id → term_name に変換
+        selected_terms = []
+        for term_id in quiz_ctrl.review_terms:
+            detail = quiz_ctrl.model.get_term_detail_by_id(term_id)
+            if detail:
+                selected_terms.append(detail["name"])
+
+        if not selected_terms:
+            print("見直し対象の単語が取得できませんでした。")
+            return
+
+        # 新しいクイズコントローラを作成して開始
+        new_quiz = self.app._create_quiz_controller()
+
+        # 画面切り替え
+        self.app.current_controller.hide()
+        self.app.current_controller = new_quiz
+        new_quiz.show()
+
+        # 見直し問題だけでクイズ開始
+        new_quiz.start(
+            selected_terms=selected_terms,
+            mode=self.mode,
+            num_questions=len(selected_terms),
+            selected_tags=self.tag,
+            selected_categories=self.category
+        )

@@ -30,13 +30,31 @@ class AppController:
             "wordentry": lambda: self._create_wordentry_controller(),
             "qselect": lambda: self._create_qselect_controller(),
             "quiz": lambda: self._create_quiz_controller(),
-            "result": lambda: self._create_result_controller()
+            "result": lambda: self._create_result_controller(),
+            "auth": lambda: self._create_auth_controller(),  # 新規追加
+            "sync": lambda: self._create_sync_controller()  # 新規追加
+
         }
 
         # 最初の画面を表示
         self.switch_view("home")
 
     # --- モデルファクトリ ---
+
+    # 新規追加
+    def _get_auth_model(self):
+        if "auth" not in self._models:
+            from Model.AuthModel import AuthModel
+            self._models["auth"] = AuthModel(db_path=self.db_path)
+        return self._models["auth"]
+    
+    def _get_sync_model(self):
+        if "sync" not in self._models:
+            from Model.SyncModel import SyncModel
+            self._models["sync"] = SyncModel(db_path=self.db_path)
+        return self._models["sync"]
+    # 新規追加ここまで
+
     def _get_wordbook_model(self):
         if "wordbook" not in self._models:
             from Model.WordbookModel import WordBookModel
@@ -82,6 +100,17 @@ class AppController:
         return self._models["result"]
 
     # --- コントローラ生成ラッパ ---
+
+    # 新規追加
+    def _create_auth_controller(self):
+        from Controller.AuthController import AuthController
+        return AuthController(self, self._get_auth_model())
+
+    def _create_sync_controller(self):
+        from Controller.SyncController import SyncController
+        return SyncController(self, self._get_sync_model())
+    # 新規追加ここまで
+
     def _create_home_controller(self):
         from Controller.HomeController import HomeController
         return HomeController(self)
@@ -109,6 +138,37 @@ class AppController:
     def _create_result_controller(self):
         from Controller.ResultController import ResultController
         return ResultController(self, self._get_result_model())
+
+     #<新規追加>
+    def go_to_auth(self):
+        """ログイン/登録画面へ遷移"""
+        # AuthController経由で画面遷移
+        self.switch_view("auth")
+
+    def go_to_sync(self, username=None, password=None):
+        """同期画面へ遷移し、ID/PASSがあれば自動接続を試みる"""
+        print("DEBUG: go_to_sync が呼ばれました")
+        
+        # 画面切り替え実行
+        self.switch_view("sync")
+        
+        # 切り替えが成功したかチェック（現在のコントローラがSyncControllerになっているか）
+        # クラス名を文字列で確認することで、インポート不要でチェック
+        current_class_name = self.current_controller.__class__.__name__
+        
+        if current_class_name != "SyncController":
+            print(f"ERROR: SyncControllerへの切り替えに失敗しました。現在は {current_class_name} です。")
+            print("Hint: SyncController.py のコードにエラーがないか、ターミナルの上の行のエラーログを確認してください。")
+            return
+
+        # 成功していれば情報を渡す
+        if username and password:
+            if hasattr(self.current_controller, "setup_with_credentials"):
+                print(f"DEBUG: SyncControllerにクレデンシャルを渡します: {username}")
+                self.current_controller.setup_with_credentials(username, password)
+            else:
+                print("DEBUG: SyncController に setup_with_credentials メソッドが見つかりません。スペルを確認してください。")
+    # 新規追加ここまで
 
    # --- 画面遷移 (修正: 引数を追加) ---
     def switch_view(self, view_name, word_name: str = None, context_list: list = None):
@@ -142,6 +202,11 @@ class AppController:
                 pass
 
         self.current_controller = next_controller
+
+        #新規追加
+        next_controller.show()
+        self.root.title(f"WordBook - {view_name.capitalize()}")
+        #新規追加ここまで
 
         # Wordlistに戻るとき、直前がWordbook以外ならフィルタをリセット
         if view_name == "wordlist" and self._last_view_name != "wordbook":
@@ -199,6 +264,8 @@ class AppController:
                 return
 
             quiz_ctrl = Q_Quiz_Controller(self, quiz_model)
+
+            self._controller_cache["quiz"] = quiz_ctrl
 
             if self.current_controller:
                 try:
