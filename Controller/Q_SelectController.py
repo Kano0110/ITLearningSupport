@@ -134,6 +134,11 @@ class Q_SelectController:
         except Exception as e:
             print(f"Warning: select_all_tags failed: {e}")
 
+    def clear_all_tags(self):
+        """全タグの選択を解除"""
+        self.selected_tags.clear()
+        self._recompute_filtered_terms()
+
     def select_all_categories(self):
         """全カテゴリを選択"""
         try:
@@ -142,6 +147,11 @@ class Q_SelectController:
             self._recompute_filtered_terms()
         except Exception as e:
             print(f"Warning: select_all_categories failed: {e}")
+
+    def clear_all_categories(self):
+        """全カテゴリの選択を解除"""
+        self.selected_categories.clear()
+        self._recompute_filtered_terms()
 
     def clear_all(self):
         """全選択を解除"""
