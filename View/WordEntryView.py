@@ -34,9 +34,9 @@ class WordEntryView:
 
         # ===== タイトル =====
 
-        title_frame = tk.Frame(self.frame, bg="#F69713")
+        title_frame = tk.Frame(self.frame, bg="#099945")
         title_frame.grid(row=0, column=0, columnspan=3, sticky="ew", pady=(10, 20))
-        title_label = tk.Label(title_frame, text="単語登録", font=('Arial', 18, 'bold'), bg='#F69713', fg='white')
+        title_label = tk.Label(title_frame, text="単語登録", font=('Arial', 18, 'bold'), bg='#099945', fg='white')
         title_label.pack(pady=5)
 
         # ===== 入力フォーム =====

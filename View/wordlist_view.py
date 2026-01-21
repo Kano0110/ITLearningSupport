@@ -52,14 +52,14 @@ class WordListView:
 
     def _create_navigation_buttons(self):
         """ナビゲーションボタン（Home、WordEntry）を作成"""
-        nav_frame = tk.Frame(self.frame, bg='#2C3E50')
+        nav_frame = tk.Frame(self.frame, bg='#4A90E2')
         nav_frame.pack(fill='x', ipady=5, padx=40, pady=(20, 0))
         
         # タイトルラベル（中央配置）
         title_label = tk.Label(
             nav_frame,
             text="単語一覧",
-            bg='#2C3E50',
+            bg='#4A90E2',
             fg='white',
             font=('Arial', 18, 'bold')
         )
@@ -102,7 +102,6 @@ class WordListView:
         style = ttk.Style()
         style.configure('Yomi.TButton', foreground='#34495E', font=('Arial', 10))
         style.configure('AllYomi.TButton', foreground='#E74C3C', font=('Arial', 10, 'bold'))
-        
         # 五十音インデックス取得
         yomi_keys = []
         try:

@@ -76,7 +76,7 @@ class Q_SelectModel(BaseModel):
 
         sql = "SELECT DISTINCT word_name FROM terms WHERE word_name IS NOT NULL"
         if conditions:
-            sql += " AND " + " AND ".join(conditions)
+            sql += " AND (" + " AND ".join(conditions) + ")"
         sql += " ORDER BY word_name COLLATE NOCASE;"
 
         try:
@@ -91,17 +91,18 @@ class Q_SelectModel(BaseModel):
         """利用可能なカテゴリをDBから取得
         
         Returns:
-            カテゴリ名のリスト（アルファベット順）
+            カテゴリ名のリスト（数字・記号・アルファベット順）
         """
         try:
             with self.get_conn() as conn:
                 cur = conn.execute(
                     "SELECT DISTINCT category FROM terms "
-                    "WHERE category IS NOT NULL "
+                    "WHERE category IS NOT NULL AND category != '' "
                     "ORDER BY category COLLATE NOCASE;"
                 )
                 rows = cur.fetchall()
-                return [row['category'] for row in rows if row['category']]
+                categories = [str(row['category']) for row in rows if row['category']]
+                return categories
         except Exception:
             logger.exception("カテゴリ一覧取得エラー")
             return []
@@ -120,7 +121,7 @@ class Q_SelectModel(BaseModel):
                     "ORDER BY tag COLLATE NOCASE;"
                 )
                 rows = cur.fetchall()
-                return [row['tag'] for row in rows if row['tag']]
+                return [str(row['tag']) for row in rows if row['tag']]
         except Exception:
             logger.exception("タグ一覧取得エラー")
             return []
